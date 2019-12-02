@@ -1,0 +1,31 @@
+package com.spaghoot.spaghetti.ui.stock
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
+import com.spaghoot.spaghetti.R
+
+class StockFragment : Fragment() {
+
+    private lateinit var stockViewModel: StockViewModel
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        stockViewModel =
+            ViewModelProviders.of(this).get(StockViewModel::class.java)
+        val root = inflater.inflate(R.layout.fragment_stock, container, false)
+        val textView: TextView = root.findViewById(R.id.text_stock)
+        stockViewModel.text.observe(this, Observer {
+            textView.text = it
+        })
+        return root
+    }
+}

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.spaghoot.spaghetti.ui.home.HomeFragment"
+        android:label="@string/menu_home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/nav_transfer"
+        android:name="com.spaghoot.spaghetti.ui.transfer.TransferFragment"
+        android:label="@string/menu_transfer"
+        tools:layout="@layout/fragment_transfer" />
+
+    <fragment
+        android:id="@+id/nav_bet"
+        android:name="com.spaghoot.spaghetti.ui.bet.BetFragment"
+        android:label="@string/menu_bet"
+        tools:layout="@layout/fragment_bet" />
+
+    <fragment
+        android:id="@+id/nav_checking"
+        android:name="com.spaghoot.spaghetti.ui.checking.CheckingFragment"
+        android:label="@string/menu_checking"
+        tools:layout="@layout/fragment_checking" />
+
+    <fragment
+        android:id="@+id/nav_saving"
+        android:name="com.spaghoot.spaghetti.ui.saving.SavingFragment"
+        android:label="@string/menu_saving"
+        tools:layout="@layout/fragment_saving" />
+
+    <fragment
+        android:id="@+id/nav_loan"
+        android:name="com.spaghoot.spaghetti.ui.loan.LoanFragment"
+        android:label="@string/menu_loan"
+        tools:layout="@layout/fragment_loan" />
+
+    <fragment
+        android:id="@+id/nav_stock"
+        android:name="com.spaghoot.spaghetti.ui.stock.StockFragment"
+        android:label="@string/menu_stock"
+        tools:layout="@layout/fragment_stock" />
+</navigation>
