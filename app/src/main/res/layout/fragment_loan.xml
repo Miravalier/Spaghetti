@@ -62,7 +62,7 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
-                android:id="@+id/loan_name"
+                android:id="@+id/account_name"
                 android:layout_width="120dp"
                 android:layout_height="wrap_content"
                 android:text="Smol Loan"
@@ -73,7 +73,7 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
-                android:id="@+id/amount_owed"
+                android:id="@+id/balance"
                 android:layout_width="120dp"
                 android:layout_height="0dp"
                 android:gravity="center|center_vertical"

@@ -28,14 +28,15 @@
 
     <TextView
         android:id="@+id/header"
-        android:layout_width="90dp"
-        android:layout_height="24dp"
+        android:layout_width="177dp"
+        android:layout_height="29dp"
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
         android:gravity="center|center_vertical"
-        android:text="@string/current_loans"
+        android:text="Current Savings Accounts"
         android:textAppearance="@style/TextAppearance.AppCompat.Small"
         app:layout_constraintBottom_toTopOf="@+id/divider"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <ListView

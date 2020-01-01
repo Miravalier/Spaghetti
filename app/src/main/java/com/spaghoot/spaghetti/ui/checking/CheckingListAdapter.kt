@@ -1,4 +1,4 @@
-package com.spaghoot.spaghetti.ui.saving
+package com.spaghoot.spaghetti.ui.checking
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -9,7 +9,7 @@ import android.widget.TextView
 import com.spaghoot.spaghetti.R
 import kotlin.random.Random
 
-class SavingsListAdapter(ctx: Context) : BaseAdapter() {
+class CheckingListAdapter(ctx: Context) : BaseAdapter() {
     private val inflater: LayoutInflater
             = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
@@ -26,7 +26,7 @@ class SavingsListAdapter(ctx: Context) : BaseAdapter() {
     }
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-        val rowView = inflater.inflate(R.layout.activity_savings_list, parent, false)
+        val rowView = inflater.inflate(R.layout.activity_checking_list, parent, false)
         val loanNameView: TextView = rowView.findViewById(R.id.account_name)
         loanNameView.text = String.format("Test %d", Random.nextInt())
         val amountOwedView: TextView = rowView.findViewById(R.id.balance)

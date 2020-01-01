@@ -24,6 +24,12 @@
         tools:layout="@layout/fragment_bet" />
 
     <fragment
+        android:id="@+id/nav_itransfer"
+        android:name="com.spaghoot.spaghetti.ui.itransfer.ITransferFragment"
+        android:label="@string/menu_itransfer"
+        tools:layout="@layout/fragment_itransfer" />
+
+    <fragment
         android:id="@+id/nav_checking"
         android:name="com.spaghoot.spaghetti.ui.checking.CheckingFragment"
         android:label="@string/menu_checking"
