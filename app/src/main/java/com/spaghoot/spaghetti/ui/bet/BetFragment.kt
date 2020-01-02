@@ -11,18 +11,12 @@ import androidx.lifecycle.ViewModelProviders
 import com.spaghoot.spaghetti.R
 
 class BetFragment : Fragment() {
-
-    private lateinit var slideshowViewModel: BetViewModel
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        slideshowViewModel =
-            ViewModelProviders.of(this).get(BetViewModel::class.java)
         val root = inflater.inflate(R.layout.fragment_bet, container, false)
-
         return root
     }
 }

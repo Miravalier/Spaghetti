@@ -12,17 +12,12 @@ import com.spaghoot.spaghetti.R
 
 class LoanFragment : Fragment() {
 
-    private lateinit var loanViewModel: LoanViewModel
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        loanViewModel =
-            ViewModelProviders.of(this).get(LoanViewModel::class.java)
         val root = inflater.inflate(R.layout.fragment_loan, container, false)
-
         return root
     }
 }

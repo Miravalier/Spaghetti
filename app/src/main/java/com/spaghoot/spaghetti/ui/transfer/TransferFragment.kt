@@ -11,18 +11,12 @@ import androidx.lifecycle.ViewModelProviders
 import com.spaghoot.spaghetti.R
 
 class TransferFragment : Fragment() {
-
-    private lateinit var transferViewModel: TransferViewModel
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        transferViewModel =
-            ViewModelProviders.of(this).get(TransferViewModel::class.java)
         val root = inflater.inflate(R.layout.fragment_transfer, container, false)
-
         return root
     }
 }

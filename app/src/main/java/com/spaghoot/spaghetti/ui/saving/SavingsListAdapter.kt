@@ -7,7 +7,8 @@ import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.TextView
 import com.spaghoot.spaghetti.R
-import kotlin.random.Random
+import com.spaghoot.spaghetti.library.generateDebugName
+import com.spaghoot.spaghetti.library.generateDebugSpaghettiString
 
 class SavingsListAdapter(ctx: Context) : BaseAdapter() {
     private val inflater: LayoutInflater
@@ -27,10 +28,11 @@ class SavingsListAdapter(ctx: Context) : BaseAdapter() {
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         val rowView = inflater.inflate(R.layout.activity_savings_list, parent, false)
-        val loanNameView: TextView = rowView.findViewById(R.id.account_name)
-        loanNameView.text = String.format("Test %d", Random.nextInt())
-        val amountOwedView: TextView = rowView.findViewById(R.id.balance)
-        amountOwedView.text = String.format("%.3f sp", Random.nextDouble(1000.0))
+        val accountNameView: TextView = rowView.findViewById(R.id.account_name)
+        accountNameView.text = generateDebugName()
+
+        val balanceView: TextView = rowView.findViewById(R.id.balance)
+        balanceView.text = generateDebugSpaghettiString()
         return rowView
     }
 }

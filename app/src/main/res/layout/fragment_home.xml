@@ -6,12 +6,12 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Net Worth:"
         android:textSize="36sp"
-        app:layout_constraintBottom_toTopOf="@+id/divider8"
+        app:layout_constraintBottom_toTopOf="@+id/upper_divider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
@@ -19,7 +19,7 @@
         app:layout_constraintVertical_bias="0.9" />
 
     <View
-        android:id="@+id/divider8"
+        android:id="@+id/upper_divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#00FFFFFF"
@@ -28,17 +28,17 @@
         app:layout_constraintVertical_bias="0.40" />
 
     <View
-        android:id="@+id/divider9"
+        android:id="@+id/lower_divider"
         android:layout_width="1dp"
         android:layout_height="match_parent"
         android:background="#00FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/divider8" />
+        app:layout_constraintTop_toTopOf="@+id/upper_divider" />
 
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/amount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
@@ -46,12 +46,12 @@
         android:text="12678.92"
         android:textSize="36sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/divider9"
-        app:layout_constraintTop_toTopOf="@+id/divider8"
+        app:layout_constraintEnd_toStartOf="@+id/lower_divider"
+        app:layout_constraintTop_toTopOf="@+id/upper_divider"
         app:layout_constraintVertical_bias="0.05" />
 
     <TextView
-        android:id="@+id/textView4"
+        android:id="@+id/currency"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -59,7 +59,7 @@
         android:text="@string/spaghetti"
         android:textSize="36sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/divider9"
-        app:layout_constraintTop_toBottomOf="@+id/divider8"
+        app:layout_constraintStart_toStartOf="@+id/lower_divider"
+        app:layout_constraintTop_toBottomOf="@+id/upper_divider"
         app:layout_constraintVertical_bias="0.05" />
 </androidx.constraintlayout.widget.ConstraintLayout>

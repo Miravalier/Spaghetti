@@ -35,7 +35,7 @@
         app:layout_constraintVertical_bias="0.5" />
 
     <View
-        android:id="@+id/divider10"
+        android:id="@+id/savings_list_divider"
         android:layout_width="1dp"
         android:layout_height="50dp"
         android:background="#00FFFFFF"

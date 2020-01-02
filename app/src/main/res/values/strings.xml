@@ -22,4 +22,5 @@
     <string name="current_loans">Current Loans</string>
     <string name="open_new_loan">Open New Loan</string>
     <string name="open_new_account">Open New Account</string>
+    <string name="preference_file_key">spaghetti_HD1SSCgDmEUOkcQZ</string>
 </resources>
