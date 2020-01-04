@@ -8,9 +8,10 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ListView
 import androidx.fragment.app.Fragment
-import com.spaghoot.spaghetti.MainActivity
 import com.spaghoot.spaghetti.NewAccountActivity
 import com.spaghoot.spaghetti.R
+import org.json.JSONObject
+import java.net.URL
 
 class CheckingFragment : Fragment() {
     override fun onCreateView(
@@ -32,6 +33,10 @@ class CheckingFragment : Fragment() {
             }
             startActivity(intent)
         }
+
+        val response: String = URL("https://miravalier.net/login").openConnection().content as String? ?: "{}"
+        val json = JSONObject(response)
+        val abc: String? = json.getString("abc")
 
         return root
     }

@@ -7,26 +7,26 @@
 
 
     <TextView
-        android:id="@+id/email_label"
+        android:id="@+id/username_label"
         android:layout_width="132dp"
         android:layout_height="41dp"
         android:layout_marginBottom="8dp"
         android:gravity="center|center_vertical"
-        android:text="Email"
+        android:text="Username"
         android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@+id/email_entry"
+        app:layout_constraintBottom_toTopOf="@+id/username_entry"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent" />
 
     <EditText
-        android:id="@+id/email_entry"
+        android:id="@+id/username_entry"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="28dp"
-        android:contentDescription="email address"
+        android:contentDescription="username"
         android:ems="10"
-        android:inputType="textEmailAddress"
+        android:inputType="text"
         app:layout_constraintBottom_toTopOf="@+id/login_divider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
