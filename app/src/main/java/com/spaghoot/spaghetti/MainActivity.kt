@@ -16,8 +16,8 @@ import android.view.Menu
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var authToken: String
-    lateinit var username: String
+    private var authToken: String? = null
+    private var username: String? = null
     private lateinit var appBarConfiguration: AppBarConfiguration
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,15 +26,11 @@ class MainActivity : AppCompatActivity() {
         val preferences = this.getSharedPreferences(
             getString(R.string.preference_file_key), Context.MODE_PRIVATE
         )
-        val authToken = preferences.getString("auth_token", null)
-        val username = preferences.getString("username", null)
+        authToken = preferences.getString("auth_token", null)
+        username = preferences.getString("username", null)
         if (authToken == null || username == null) {
             // Goto login activity
             startActivity(Intent(this, LoginActivity::class.java))
-        }
-        else {
-            this.authToken = authToken
-            this.username = username
         }
 
         setContentView(R.layout.activity_main)
