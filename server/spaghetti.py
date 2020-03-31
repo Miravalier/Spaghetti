@@ -25,7 +25,7 @@ DAILY_INCOME = 10
 SAVINGS_APR = 0.015
 
 # Constants
-SECONDS_PER_DAY = 86400
+MINUTES_PER_DAY = 1440
 MINUTES_PER_YEAR = 525600 # HOW DO YOU MEASURE A YEAR IN THE LIFE
 NOW = datetime.now()
 
@@ -118,11 +118,11 @@ class Account:
         seconds_advanced = (NOW - self.update_time).total_seconds()
         if seconds_advanced < 60:
             return
+        minutes_advanced = round(seconds_advanced / 60)
 
         if self.type == CHECKING:
-            self.add_balance(DAILY_INCOME * seconds_advanced / SECONDS_PER_DAY)
+            self.add_balance(DAILY_INCOME * minutes_advanced / MINUTES_PER_DAY)
         elif self.type == SAVINGS:
-            minutes_advanced = round(seconds_advanced / 60)
             mpr = SAVINGS_APR / MINUTES_PER_YEAR
             interest_rate = mpr ** minutes_advanced
             self.add_balance(self.balance * interest_rate)
