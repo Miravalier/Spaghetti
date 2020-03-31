@@ -31,18 +31,20 @@ class LoginActivity : AppCompatActivity() {
         val usernameEntry = findViewById<EditText>(R.id.username_entry)
         val passwordEntry = findViewById<EditText>(R.id.password_entry)
 
-        val loginButton = findViewById<Button>(R.id.login_button);
+        val loginButton = findViewById<Button>(R.id.login_button)
         loginButton.setOnClickListener {
             val postParams = HashMap<String, String>()
             postParams["username"] = usernameEntry.text.toString()
             postParams["password"] = passwordEntry.text.toString()
+            onLoginResponse("Debug Response")
         }
 
-        val registerButton = findViewById<Button>(R.id.register_button);
+        val registerButton = findViewById<Button>(R.id.register_button)
         registerButton.setOnClickListener {
             val postParams = HashMap<String, String>()
             postParams["username"] = usernameEntry.text.toString()
             postParams["password"] = passwordEntry.text.toString()
+            onLoginResponse("Debug Response")
         }
     }
 }

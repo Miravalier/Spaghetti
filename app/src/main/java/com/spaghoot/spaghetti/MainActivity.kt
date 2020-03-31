@@ -28,10 +28,6 @@ class MainActivity : AppCompatActivity() {
         )
         authToken = preferences.getString("auth_token", null)
         username = preferences.getString("username", null)
-        if (authToken == null || username == null) {
-            // Goto login activity
-            startActivity(Intent(this, LoginActivity::class.java))
-        }
 
         setContentView(R.layout.activity_main)
         val toolbar: Toolbar = findViewById(R.id.toolbar)
