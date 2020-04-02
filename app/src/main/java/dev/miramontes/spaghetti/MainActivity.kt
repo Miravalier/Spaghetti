@@ -1,6 +1,5 @@
 package dev.miramontes.spaghetti
 
-import android.content.Context
 import android.os.Bundle
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -12,21 +11,18 @@ import com.google.android.material.navigation.NavigationView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import android.view.Menu
+import dev.miramontes.spaghetti.library.getIdToken
 
 class MainActivity : AppCompatActivity() {
-
-    private var authToken: String? = null
-    private var username: String? = null
     private lateinit var appBarConfiguration: AppBarConfiguration
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val preferences = this.getSharedPreferences(
-            getString(R.string.preference_file_key), Context.MODE_PRIVATE
-        )
-        authToken = preferences.getString("auth_token", null)
-        username = preferences.getString("username", null)
+        val idToken = getIdToken(this)
+        if (idToken == null) {
+            finish()
+        }
 
         setContentView(R.layout.activity_main)
         val toolbar: Toolbar = findViewById(R.id.toolbar)

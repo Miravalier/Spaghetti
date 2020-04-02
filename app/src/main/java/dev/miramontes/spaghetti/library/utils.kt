@@ -1,5 +1,7 @@
 package dev.miramontes.spaghetti.library
 
+import android.content.Context
+import dev.miramontes.spaghetti.R
 import kotlin.random.Random
 
 
@@ -114,6 +116,28 @@ fun generateDebugName(): String {
         word_list.size)]
 }
 
+fun generateDebugSpaghettiAmount(): Double {
+    return Random.nextDouble(1000.0)
+}
+
 fun generateDebugSpaghettiString(): String {
-    return String.format("%.3f sp", Random.nextDouble(1000.0))
+    return String.format("%.3f sp", generateDebugSpaghettiAmount())
+}
+
+fun setIdToken(context: Context, idToken: String) {
+    val preferences = context.getSharedPreferences(
+        context.resources.getString(R.string.preference_file_key), Context.MODE_PRIVATE
+    )
+
+    with (preferences.edit()) {
+        putString(context.resources.getString(R.string.id_token), idToken)
+        apply()
+    }
+}
+
+fun getIdToken(context: Context): String? {
+    val preferences = context.getSharedPreferences(
+        context.resources.getString(R.string.preference_file_key), Context.MODE_PRIVATE
+    )
+    return preferences.getString(context.resources.getString(R.string.id_token), null)
 }

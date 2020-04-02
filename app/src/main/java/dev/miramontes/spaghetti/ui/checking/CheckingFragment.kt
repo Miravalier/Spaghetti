@@ -28,16 +28,12 @@ class CheckingFragment : Fragment() {
         savingsList.adapter = adapter
 
         val newAccountButton = root.findViewById<Button>(R.id.new_account_button)
-        newAccountButton.setOnClickListener{
+        newAccountButton.setOnClickListener {
             val intent = Intent(activity, NewAccountActivity::class.java).apply {
                 putExtra("spaghetti.account_type", "checking")
             }
             startActivity(intent)
         }
-
-        val response: String = URL("https://miravalier.net/login").openConnection().content as String? ?: "{}"
-        val json = JSONObject(response)
-        val abc: String? = json.getString("abc")
 
         return root
     }

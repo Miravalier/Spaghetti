@@ -1,50 +1,82 @@
 package dev.miramontes.spaghetti
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
-import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
+import com.google.android.gms.common.SignInButton
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.tasks.RuntimeExecutionException
+import dev.miramontes.spaghetti.library.setIdToken
+import java.lang.RuntimeException
+
 
 class LoginActivity : AppCompatActivity() {
-    private fun onLoginResponse(response: String) {
-        val preferences = this.getSharedPreferences(
-            getString(R.string.preference_file_key), Context.MODE_PRIVATE
-        )
-
-        with (preferences.edit()) {
-            putString("username", "debug_auth_username")
-            putString("auth_token", "debug_auth_token_value")
-            apply()
-        }
-
-        Log.i("Response", response)
-        startActivity(Intent(this, MainActivity::class.java))
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        val usernameEntry = findViewById<EditText>(R.id.username_entry)
-        val passwordEntry = findViewById<EditText>(R.id.password_entry)
+        val signInButton = findViewById<SignInButton>(R.id.sign_in_button)
+        signInButton.setSize(SignInButton.SIZE_WIDE)
 
-        val loginButton = findViewById<Button>(R.id.login_button)
-        loginButton.setOnClickListener {
-            val postParams = HashMap<String, String>()
-            postParams["username"] = usernameEntry.text.toString()
-            postParams["password"] = passwordEntry.text.toString()
-            onLoginResponse("Debug Response")
+        // Activate sign in button
+        val googleSignInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(resources.getString(R.string.google_client_id))
+            .build()
+
+        val googleSignInClient = GoogleSignIn.getClient(this, googleSignInOptions)
+
+        signInButton.setOnClickListener {
+            val signInIntent = googleSignInClient.signInIntent
+            startActivityForResult(signInIntent, resources.getInteger(R.integer.RC_GOOGLE_SIGN_IN))
         }
 
-        val registerButton = findViewById<Button>(R.id.register_button)
-        registerButton.setOnClickListener {
-            val postParams = HashMap<String, String>()
-            postParams["username"] = usernameEntry.text.toString()
-            postParams["password"] = passwordEntry.text.toString()
-            onLoginResponse("Debug Response")
+        // Use previously signed in account if possible
+        val account: GoogleSignInAccount? = GoogleSignIn.getLastSignedInAccount(this)
+        if (account != null) {
+            onLogin(account)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        // Handle google sign in result
+        if (requestCode == resources.getInteger(R.integer.RC_GOOGLE_SIGN_IN)) {
+            try {
+                val account = GoogleSignIn.getSignedInAccountFromIntent(data).result
+                if (account != null) {
+                    onLogin(account)
+                }
+                else {
+                    onError()
+                }
+            }
+            catch (e: RuntimeException) {
+                Log.e("Spaghetti", "Failed to log in: " + e.message)
+                Log.e("Spaghetti", GoogleSignInStatusCodes.getStatusCodeString(8))
+                onError()
+            }
+
+        }
+    }
+
+    private fun onError() {
+        Toast.makeText(this, R.string.login_failed, Toast.LENGTH_LONG).show()
+    }
+
+    private fun onLogin(account: GoogleSignInAccount) {
+        val idToken = account.idToken;
+        if (idToken != null) {
+            setIdToken(this, idToken)
+            startActivity(Intent(this, MainActivity::class.java))
+        }
+        else {
+            onError()
         }
     }
 }
