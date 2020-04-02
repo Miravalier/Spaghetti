@@ -1,14 +1,25 @@
-WSS_PATH = /var/wss/spaghetti.py
-SYSTEMD_PATH = /etc/systemd/system/spaghetti.wss.service
+# Configuration
+APP_NAME := spaghetti
+APP_TYPE := api
 
-.PHONY: all
+# Constant Variables
+APP_PATH := /var/${APP_TYPE}/${APP_NAME}.py
+SYSTEMD_PATH := /etc/systemd/system/${APP_NAME}.${APP_TYPE}.service
 
-all: ${SYSTEMD_PATH} ${WSS_PATH}
 
-${WSS_PATH}: spaghetti.py ${SYSTEMD_PATH}
+${APP_PATH}: ${APP_NAME}.py ${SYSTEMD_PATH}
 	sudo cp $< $@
-	sudo service spaghetti.wss restart
+	sudo service ${APP_NAME}.${APP_TYPE} restart
 
-${SYSTEMD_PATH}: spaghetti.wss.service
+${SYSTEMD_PATH}: ${APP_NAME}.${APP_TYPE}.service
 	sudo cp $< $@
 	sudo systemctl daemon-reload
+
+install: ${SYSTEMD_PATH} ${APP_PATH}
+
+uninstall:
+	sudo service ${APP_NAME}.${APP_TYPE} stop
+	sudo rm -f ${APP_PATH} ${SYSTEMD_PATH}
+	sudo systemctl daemon-reload
+
+.PHONY: install uninstall

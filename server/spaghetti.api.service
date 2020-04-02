@@ -1,12 +1,12 @@
 [Unit]
-Description=Spaghetti WSS Service
+Description=Spaghetti API Service
 After=network.target
 
 [Service]
 Type=simple
 Restart=always
 User=root
-ExecStart=/usr/bin/env python3.7 /var/wss/spaghetti.py
+ExecStart=/usr/bin/env python3.7 /var/api/spaghetti.py
 
 [Install]
 WantedBy=multi-user.target
