@@ -2,6 +2,7 @@ package dev.miramontes.spaghetti.ui.home
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,7 +14,7 @@ import dev.miramontes.spaghetti.library.getIdToken
 
 class HomeFragment : Fragment() {
     private var idToken: String? = null
-    private lateinit var amountTextView: TextView
+    private var amountTextView: TextView? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -22,6 +23,12 @@ class HomeFragment : Fragment() {
     ): View? {
         val root = inflater.inflate(R.layout.fragment_home, container, false)
         amountTextView = root.findViewById(R.id.amount)
+
+        if (idToken != null) {
+            val amount = generateDebugSpaghettiAmount()
+            amountTextView?.text = String.format("%.2f", amount)
+        }
+
         return root
     }
 
@@ -32,8 +39,5 @@ class HomeFragment : Fragment() {
         if (idToken == null) {
             activity?.finish()
         }
-
-        val amount = generateDebugSpaghettiAmount()
-        amountTextView.text = String.format("%.2f", amount)
     }
 }
