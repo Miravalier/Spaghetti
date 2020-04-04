@@ -76,14 +76,15 @@ class Status(Resource):
 class Balance(Resource):
     def put(self):
         parser = AuthenticatedParser()
-        parser.add_argument('account_id', dest='account', type=account_parameter, help='Invalid account id', required=True)
+        parser.add_argument('account', dest='account', type=account_parameter, help='Invalid account id', required=True)
         args = parser.parse_args()
-        return {"status": "authenticated"}
-
+        account = args["account"]
+        return {"balance": float(account.balance)}
 
 
 api.add_resource(AuthStatus, '/authstatus')
 api.add_resource(Status, '/status')
+api.add_resource(Balance, '/balance')
 
 
 ###########
