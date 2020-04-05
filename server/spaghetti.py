@@ -4,23 +4,22 @@ import uuid
 import sys
 from flask import Flask
 from flask_restful import reqparse, Resource, Api
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from psql import PSQL
 from mcollections import LRU
 
-
 # Configuration
 GOOGLE_OAUTH_CLIENT_ID = "308770941548-1mlflanlicqq21sah7odbo8jghacksu2.apps.googleusercontent.com"
 STARTING_BALANCE = 15
 DAILY_INCOME = 10
 SAVINGS_APR = 0.015
+SAVINGS_DPR = SAVINGS_APR / 365
 
 # Constants
-MINUTES_PER_DAY = 1440
-MINUTES_PER_YEAR = 525600 # HOW DO YOU MEASURE A YEAR IN THE LIFE
+SECONDS_PER_DAY = 86400
 CHECKING = 0
 SAVINGS = 1
 
@@ -65,7 +64,7 @@ class AuthStatus(Resource):
     def put(self):
         parser = AuthenticatedParser()
         args = parser.parse_args()
-        return {"status": "authenticated"}
+        return {"status": "authenticated", "user": args["user"].email}
 
 
 class Status(Resource):
@@ -76,7 +75,7 @@ class Status(Resource):
 class Balance(Resource):
     def put(self):
         parser = AuthenticatedParser()
-        parser.add_argument('account', dest='account', type=account_parameter, help='Invalid account id', required=True)
+        parser.add_argument('account', type=(lambda id: Account.lookup(id)), help='Invalid account id', required=True)
         args = parser.parse_args()
         account = args["account"]
         return {"balance": float(account.balance)}
@@ -102,10 +101,6 @@ def add_transaction(date, source, destination, amount):
         INSERT INTO transactions (transaction_time, from_id, to_id, amount)
         VALUES (%s, %s, %s, %s)
     """, transaction)
-
-
-def account_parameter(account_id):
-    return Account.lookup(account_id)
 
 
 class Account:
@@ -157,18 +152,17 @@ class Account:
 
     def advance_time(self):
         seconds_advanced = (datetime.now() - self.update_time).total_seconds()
-        if seconds_advanced < 60:
+        days_advanced = seconds_advanced // SECONDS_PER_DAY
+        if days_advanced <= 0:
             return
-        minutes_advanced = round(seconds_advanced / 60)
 
         if self.type == CHECKING:
-            self.add_balance(DAILY_INCOME * minutes_advanced / MINUTES_PER_DAY)
+            self.add_balance(DAILY_INCOME * days_advanced)
         elif self.type == SAVINGS:
-            mpr = SAVINGS_APR / MINUTES_PER_YEAR
-            interest_rate = mpr ** minutes_advanced
+            interest_rate = SAVINGS_DPR ** days_advanced
             self.add_balance(self.balance * interest_rate)
 
-        self.update_time = datetime.now()
+        self.update_time += timedelta(days=days_advanced)
         psql.execute("""
             UPDATE accounts SET update_time=%s WHERE account_id=%s
         """, (self.update_time, self.account_id))
@@ -220,14 +214,20 @@ class User:
 
     def create_account(self, name="Checking", type=CHECKING, balance=0):
         account_uuid = str(uuid.uuid4())
-        account_id = psql.execute_and_return("""
-            INSERT INTO accounts (
-                account_uuid, account_name, account_type,
-                account_balance, user_id, update_time
+        account_id = psql.execute_and_return(
+            """
+                INSERT INTO accounts (
+                    account_uuid, account_name, account_type,
+                    account_balance, user_id, update_time
+                )
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING account_id
+            """,
+            (
+                account_uuid, name, type, balance, self.user_id,
+                datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
             )
-            VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING account_id
-        """, (account_uuid, name, type, balance, self.user_id, datetime.now()))
+        )
         self.accounts.add(account_id)
         return Account.lookup(account_id)
 
