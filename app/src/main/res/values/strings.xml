@@ -28,4 +28,6 @@
     <string name="percent_difference">percent_difference</string>
     <string name="id_token">id_token</string>
     <string name="login_failed">Failed to login.</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="this_page_intentionally_left_blank">This Page Intentionally Left Blank</string>
 </resources>
