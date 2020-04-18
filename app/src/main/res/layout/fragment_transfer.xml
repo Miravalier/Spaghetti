@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/colorBackground">
 
     <Spinner
         android:id="@+id/spinner5"
@@ -24,6 +25,7 @@
         android:gravity="center|center_vertical"
         android:text="@string/to"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:textColor="@color/colorTextLight"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/spinner2" />
@@ -36,6 +38,7 @@
         android:gravity="center|center_vertical"
         android:text="@string/from"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:textColor="@color/colorTextLight"
         app:layout_constraintBottom_toTopOf="@+id/spinner2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
@@ -50,6 +53,7 @@
         android:gravity="center|center_vertical"
         android:text="@string/spaghetti"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:textColor="@color/colorTextLight"
         app:layout_constraintBottom_toBottomOf="@+id/editText2"
         app:layout_constraintStart_toEndOf="@+id/divider3"
         app:layout_constraintTop_toTopOf="@+id/editText2"
@@ -106,7 +110,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:background="@color/colorTextLight"
         android:text="Send / Request"
+        android:textColor="@color/colorTextDark"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/spinner5" />

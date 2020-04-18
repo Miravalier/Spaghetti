@@ -3,15 +3,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/colorBackground">
 
     <Button
         android:id="@+id/new_account_button"
         android:layout_width="153dp"
         android:layout_height="57dp"
         android:layout_marginTop="50dp"
+        android:background="@color/colorTextLight"
         android:gravity="center|center_vertical"
         android:text="@string/open_new_account"
+        android:textColor="@color/colorTextDark"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -35,6 +38,7 @@
         android:gravity="center|center_vertical"
         android:text="Current Savings Accounts"
         android:textAppearance="@style/TextAppearance.AppCompat.Small"
+        android:textColor="@color/colorTextLight"
         app:layout_constraintBottom_toTopOf="@+id/checking_divider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -43,6 +47,7 @@
         android:id="@+id/savings_list"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:background="@color/colorBackground"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
