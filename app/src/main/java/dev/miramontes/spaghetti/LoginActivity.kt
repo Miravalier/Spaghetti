@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.android.volley.Response
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -12,6 +13,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
 import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.RuntimeExecutionException
+import dev.miramontes.spaghetti.library.ServerConnection
 import dev.miramontes.spaghetti.library.setIdToken
 import java.lang.RuntimeException
 
@@ -27,6 +29,7 @@ class LoginActivity : AppCompatActivity() {
         // Activate sign in button
         val googleSignInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(resources.getString(R.string.google_client_id))
+            .requestEmail()
             .build()
 
         val googleSignInClient = GoogleSignIn.getClient(this, googleSignInOptions)
@@ -39,7 +42,14 @@ class LoginActivity : AppCompatActivity() {
         // Use previously signed in account if possible
         val account: GoogleSignInAccount? = GoogleSignIn.getLastSignedInAccount(this)
         if (account != null) {
-            onLogin(account)
+            val serverConnection = ServerConnection(this, account.idToken!!)
+            serverConnection.status(Response.Listener { response ->
+                Log.d("Spaghetti", response.toString())
+                onLogin(account)
+            },
+            Response.ErrorListener {
+                Log.e("Spaghetti", "Failed to authenticate with cached credentials.")
+            })
         }
     }
 
@@ -50,6 +60,8 @@ class LoginActivity : AppCompatActivity() {
             try {
                 val account = GoogleSignIn.getSignedInAccountFromIntent(data).result
                 if (account != null) {
+                    val idToken = account.idToken
+
                     onLogin(account)
                 }
                 else {
@@ -70,9 +82,10 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun onLogin(account: GoogleSignInAccount) {
-        val idToken = account.idToken;
+        val idToken = account.idToken
         if (idToken != null) {
             setIdToken(this, idToken)
+            Log.d("Spaghetti", "ID Token Saved")
             startActivity(Intent(this, MainActivity::class.java))
         }
         else {
