@@ -13,12 +13,13 @@ from mcollections import LRU
 
 # Configuration
 GOOGLE_OAUTH_CLIENT_ID = "308770941548-1mlflanlicqq21sah7odbo8jghacksu2.apps.googleusercontent.com"
-STARTING_BALANCE = 15
-DAILY_INCOME = 10
+STARTING_BALANCE = 50
+WEEKLY_INCOME = 25
 SAVINGS_APR = 0.015
 SAVINGS_DPR = SAVINGS_APR / 365
 
 # Constants
+DAYS_PER_WEEK = 7
 SECONDS_PER_DAY = 86400
 CHECKING = 0
 SAVINGS = 1
@@ -165,16 +166,21 @@ class Account:
     def advance_time(self):
         seconds_advanced = (datetime.now() - self.update_time).total_seconds()
         days_advanced = seconds_advanced // SECONDS_PER_DAY
-        if days_advanced <= 0:
-            return
+        weeks_advanced = days_advanced // DAYS_PER_WEEK
 
         if self.type == CHECKING:
-            self.add_balance(DAILY_INCOME * days_advanced)
+            if weeks_advanced <= 0:
+                return
+            self.add_balance(WEEKLY_INCOME * weeks_advanced)
+            self.update_time += timedelta(days=weeks_advanced * DAYS_PER_WEEK)
+
         elif self.type == SAVINGS:
+            if days_advanced <= 0:
+                return
             interest_rate = SAVINGS_DPR ** days_advanced
             self.add_balance(self.balance * interest_rate)
+            self.update_time += timedelta(days=days_advanced)
 
-        self.update_time += timedelta(days=days_advanced)
         psql.execute("""
             UPDATE accounts SET update_time=%s WHERE account_id=%s
         """, (self.update_time, self.account_id))
