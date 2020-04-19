@@ -11,8 +11,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
 import com.google.android.gms.common.SignInButton
-import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.tasks.RuntimeExecutionException
 import dev.miramontes.spaghetti.library.ServerConnection
 import dev.miramontes.spaghetti.library.setIdToken
 import java.lang.RuntimeException
@@ -73,7 +71,6 @@ class LoginActivity : AppCompatActivity() {
                 Log.e("Spaghetti", GoogleSignInStatusCodes.getStatusCodeString(8))
                 onError()
             }
-
         }
     }
 
@@ -85,7 +82,7 @@ class LoginActivity : AppCompatActivity() {
         val idToken = account.idToken
         if (idToken != null) {
             setIdToken(this, idToken)
-            Log.d("Spaghetti", "ID Token Saved")
+            Log.d("Spaghetti", "Google Login Successful")
             startActivity(Intent(this, MainActivity::class.java))
         }
         else {

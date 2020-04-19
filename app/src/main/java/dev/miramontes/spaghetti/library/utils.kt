@@ -162,7 +162,7 @@ class ServerConnection(private val context: Context, private val idToken: String
         // Request a string response from the provided URL.
         val request = JsonObjectRequest(
             Request.Method.PUT,
-            "https://spaghetti.miramontes.dev/balance",
+            "https://spaghetti.miramontes.dev/authstatus",
             jsonParameters,
             successListener,
             errorListener
@@ -172,7 +172,7 @@ class ServerConnection(private val context: Context, private val idToken: String
         queue.add(request)
     }
 
-    fun balance(successListener: Response.Listener<JSONObject>, errorListener: Response.ErrorListener) {
+    fun netWorth(successListener: Response.Listener<JSONObject>, errorListener: Response.ErrorListener) {
         // Create json parameters
         val jsonParameters = JSONObject()
         jsonParameters.put("idtoken", idToken)
@@ -180,7 +180,7 @@ class ServerConnection(private val context: Context, private val idToken: String
         // Request a string response from the provided URL.
         val request = JsonObjectRequest(
             Request.Method.PUT,
-            "https://spaghetti.miramontes.dev/balance",
+            "https://spaghetti.miramontes.dev/net-worth",
             jsonParameters,
             successListener,
             errorListener
