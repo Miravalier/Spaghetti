@@ -8,17 +8,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import com.android.volley.Request
 import com.android.volley.Response
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
 import dev.miramontes.spaghetti.R
 import dev.miramontes.spaghetti.library.ServerConnection
-import dev.miramontes.spaghetti.library.generateDebugSpaghettiAmount
 import dev.miramontes.spaghetti.library.getIdToken
-import kotlinx.android.synthetic.main.fragment_home.*
-import org.json.JSONObject
 
 class HomeFragment : Fragment() {
     private var idToken: String? = null
@@ -33,13 +26,12 @@ class HomeFragment : Fragment() {
 
         if (idToken != null && activity != null) {
             val serverConnection = ServerConnection(activity!!, idToken!!)
-            serverConnection.balance(
+            serverConnection.netWorth(
                 Response.Listener {response ->
-                    amountTextView.text = String.format("%.2f", response.getDouble("balance"))
+                    amountTextView.text = String.format("%.2f spaghetti", response.getDouble("balance"))
                 },
                 Response.ErrorListener {
                     Log.e("Spaghetti","Failed to Authenticate with the server")
-                    amountTextView.text = "Network Error"
                     activity?.finish()
                 }
             )
