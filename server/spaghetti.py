@@ -151,13 +151,13 @@ class Account:
         self.add_balance(amount)
 
     def add_balance(self, amount):
-        self.update_balance(self.balance + amount)
+        self.update_balance(self.balance + Decimal(amount))
 
     def subtract_balance(self, amount):
-        self.update_balance(self.balance - amount)
+        self.update_balance(self.balance - Decimal(amount))
 
     def update_balance(self, amount):
-        self.balance = amount
+        self.balance = Decimal(amount)
         psql.execute("""
             UPDATE accounts SET account_balance=%s WHERE account_id=%s
         """, (amount, self.account_id))
