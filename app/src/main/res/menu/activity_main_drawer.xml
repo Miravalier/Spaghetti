@@ -8,10 +8,15 @@
             android:id="@+id/nav_home"
             android:icon="@drawable/ic_menu_home"
             android:title="@string/menu_home" />
+
         <item
             android:id="@+id/nav_transfer"
             android:icon="@drawable/ic_menu_transfer"
             android:title="@string/menu_transfer" />
+        <item
+            android:id="@+id/nav_requests"
+            android:icon="@drawable/ic_menu_requests"
+            android:title="@string/menu_requests" />
         <item
             android:id="@+id/nav_bet"
             android:icon="@drawable/ic_menu_bet"

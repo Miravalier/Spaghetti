@@ -18,6 +18,12 @@
         tools:layout="@layout/fragment_transfer" />
 
     <fragment
+        android:id="@+id/nav_requests"
+        android:name="dev.miramontes.spaghetti.ui.requests.RequestsFragment"
+        android:label="@string/menu_requests"
+        tools:layout="@layout/fragment_requests" />
+
+    <fragment
         android:id="@+id/nav_bet"
         android:name="dev.miramontes.spaghetti.ui.bet.BetFragment"
         android:label="@string/menu_bet"

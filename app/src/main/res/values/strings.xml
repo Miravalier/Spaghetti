@@ -8,6 +8,7 @@
     <string name="google_client_id">308770941548-1mlflanlicqq21sah7odbo8jghacksu2.apps.googleusercontent.com</string>
     <string name="menu_home">Home</string>
     <string name="menu_transfer">Send or Request</string>
+    <string name="menu_requests">Requests</string>
     <string name="menu_itransfer">Transfer Between Accounts</string>
     <string name="menu_bet">Bets</string>
     <string name="menu_checking">Checking</string>
