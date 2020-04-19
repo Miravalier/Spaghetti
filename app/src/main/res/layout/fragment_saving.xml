@@ -36,7 +36,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
         android:gravity="center|center_vertical"
-        android:text="Current Savings Accounts"
+        android:text="@string/savings_accounts_header"
         android:textAppearance="@style/TextAppearance.AppCompat.Small"
         android:textColor="@color/colorTextLight"
         app:layout_constraintBottom_toTopOf="@+id/checking_divider"
