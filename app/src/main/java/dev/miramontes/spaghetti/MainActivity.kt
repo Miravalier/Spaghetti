@@ -1,6 +1,7 @@
 package dev.miramontes.spaghetti
 
 import android.os.Bundle
+import android.util.Log
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -11,6 +12,9 @@ import com.google.android.material.navigation.NavigationView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import android.view.Menu
+import android.view.MenuItem
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import dev.miramontes.spaghetti.library.getIdToken
 
 class MainActivity : AppCompatActivity() {
@@ -35,9 +39,9 @@ class MainActivity : AppCompatActivity() {
         // menu should be considered as top level destinations.
         this.appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.nav_home, R.id.nav_requests, R.id.nav_transfer, R.id.nav_bet,
-                R.id.nav_checking, R.id.nav_saving, R.id.nav_loan,
-                R.id.nav_stock
+                R.id.nav_home, R.id.nav_requests, R.id.nav_transfer,
+                R.id.nav_bet, R.id.nav_checking, R.id.nav_saving,
+                R.id.nav_loan, R.id.nav_stock
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
@@ -48,6 +52,28 @@ class MainActivity : AppCompatActivity() {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.main, menu)
         return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_settings -> {
+                Log.e("Spaghetti", "Settings not implemented")
+                true
+            }
+            R.id.action_sign_out -> {
+                // Sign out of google
+                val googleSignInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(resources.getString(R.string.google_client_id))
+                    .requestEmail()
+                    .build()
+                val googleSignInClient = GoogleSignIn.getClient(this, googleSignInOptions)
+                googleSignInClient.signOut()
+                // Close this activity
+                finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {
