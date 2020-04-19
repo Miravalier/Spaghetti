@@ -28,12 +28,18 @@ def log(*args, **kwargs):
     print(*args, **kwargs, file=sys.stderr)
 
 
+def elog(e, *args, **kwargs):
+    log(*args, "{}: {}".format(str(type(e)), str(e)), **kwargs)
+
+
 def authenticate_user(token):
     try:
         idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_OAUTH_CLIENT_ID)
 
         if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+            log("User attempted to authenticate with wrong issuer: {}".format(idinfo['iss']))
             raise ValueError('wrong issuer')
+
 
         google_id = idinfo['sub']
         email = idinfo['email']
@@ -41,7 +47,9 @@ def authenticate_user(token):
         if not user.accounts:
             user.create_account(balance=STARTING_BALANCE)
         return user
-    except:
+
+    except Exception as e:
+        elog(e, "User failed to authenticate")
         abort(403, message="Failed to authenticate.")
         raise
 
@@ -68,22 +76,26 @@ class AuthStatus(Resource):
 
 
 class Status(Resource):
+    def put(self):
+        return {"status": "online"}
+
     def get(self):
         return {"status": "online"}
 
 
-class Balance(Resource):
+class NetWorth(Resource):
     def put(self):
         parser = AuthenticatedParser()
-        parser.add_argument('account', type=(lambda id: Account.lookup(id)), help='Invalid account id', required=True)
         args = parser.parse_args()
-        account = args["account"]
+
+        account = args["user"].checking
+        account.advance_time()
         return {"balance": float(account.balance)}
 
 
 api.add_resource(AuthStatus, '/authstatus')
 api.add_resource(Status, '/status')
-api.add_resource(Balance, '/balance')
+api.add_resource(NetWorth, '/net-worth')
 
 
 ###########
@@ -209,8 +221,14 @@ class User:
 
         self.accounts = set()
         for account_id, name in account_ids:
-            Account.lookup(account_id)
-            self.accounts.add(account_id)
+            self.accounts.add(Account.lookup(account_id))
+
+    @property
+    def checking(self):
+        for account in self.accounts:
+            if account.type == CHECKING:
+                return account
+        return None
 
     def create_account(self, name="Checking", type=CHECKING, balance=0):
         account_uuid = str(uuid.uuid4())
@@ -228,8 +246,9 @@ class User:
                 datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
             )
         )
-        self.accounts.add(account_id)
-        return Account.lookup(account_id)
+        account = Account.lookup(account_id)
+        self.accounts.add(account)
+        return account
 
     @classmethod
     def lookup(cls, google_id, email):
