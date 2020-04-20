@@ -33,6 +33,11 @@ def elog(e, *args, **kwargs):
     log(*args, "{}: {}".format(str(type(e)), str(e)), **kwargs)
 
 
+def user_parameter(user_id):
+    google_id, email = psql.single_query("SELECT google_id, email FROM users WHERE user_id=%s", user_id)
+    return User.lookup(google_id, email)
+
+
 def authenticate_user(token):
     try:
         idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_OAUTH_CLIENT_ID)
@@ -94,6 +99,36 @@ class NetWorth(Resource):
         return {"balance": float(account.balance)}
 
 
+class ListUsers(Resource):
+    def put(self):
+        parser = AuthenticatedParser()
+        args = parser.parse_args()
+
+        return {"users": psql.query("SELECT user_id, user_name FROM users")}
+
+
+class AcceptRequest(Resource):
+    pass
+
+
+class CreateRequest(Resource):
+    def put(self):
+        parser = AuthenticatedParser()
+        parser.add_argument('source', type=user_parameter, help='Invalid source user id', required=True)
+        parser.add_argument('destination', type=user_parameter, help='Invalid destination user id', required=True)
+        args = parser.parse_args()
+
+        user = args["user"]
+        source = args["source"]
+        destination = args["destination"]
+
+        if user != source and user != destination:
+            return {"error": "you cannot request a transfer that does not involve you"}
+
+        # TODO add a pending transaction
+        return {"success": "transfer requested"}
+
+
 api.add_resource(AuthStatus, '/authstatus')
 api.add_resource(Status, '/status')
 api.add_resource(NetWorth, '/net-worth')
@@ -107,9 +142,19 @@ psql = PSQL("dbname=spaghetti")
 
 
 def add_transaction(date, source, destination, amount):
-    transaction = (date, source.account_id, destination.account_id, amount)
-    source.transactions.append(transaction)
-    destination.transactions.append(transaction)
+    if source is not None and destination is not None:
+        transaction = (date, source.account_id, destination.account_id, amount)
+        source.transactions.append(transaction)
+        destination.transactions.append(transaction)
+    elif source is not None:
+        transaction = (date, source.account_id, None, amount)
+        source.transactions.append(transaction)
+    elif destination is not None:
+        transaction = (date, None, destination.account_id, amount)
+        destination.transactions.append(transaction)
+    else:
+        raise ValueError("Source and destination can't both be None")
+
     psql.execute("""
         INSERT INTO transactions (transaction_time, from_id, to_id, amount)
         VALUES (%s, %s, %s, %s)
@@ -210,15 +255,17 @@ class User:
         self.google_id = google_id
         self.email = email
 
-        user_id = psql.single_query("SELECT user_id FROM users WHERE google_id=%s", (google_id,))
-        if user_id:
+        try:
+            user_id, username = psql.single_query("SELECT user_id, user_name FROM users WHERE google_id=%s", (google_id,))
             self.user_id = user_id
-        else:
+            self.username = username
+        except TypeError:
             self.user_id = psql.execute_and_return("""
-                INSERT INTO users (google_id, email)
-                VALUES (%s, %s)
+                INSERT INTO users (google_id, email, user_name)
+                VALUES (%s, %s, %s)
                 RETURNING user_id
-            """, (google_id, email))
+            """, (google_id, email, email))
+            self.username = email
 
         account_ids = psql.query("""
             SELECT account_id, account_name
@@ -229,6 +276,13 @@ class User:
         for account_id, name in account_ids:
             self.accounts.add(Account.lookup(account_id))
 
+    def __eq__(self, other):
+        return self.user_id == other.user_id
+
+    def update_username(username):
+        self.username = username
+        psql.execute("UPDATE users SET user_name=%s WHERE user_id=%s", (username, self.user_id))
+
     @property
     def checking(self):
         for account in self.accounts:
@@ -236,7 +290,7 @@ class User:
                 return account
         return None
 
-    def create_account(self, name="Checking", type=CHECKING, balance=0):
+    def create_account(self, name="Checking", type=CHECKING, balance=STARTING_BALANCE):
         account_uuid = str(uuid.uuid4())
         account_id = psql.execute_and_return(
             """
