@@ -13,12 +13,13 @@ from mcollections import LRU
 
 # Configuration
 GOOGLE_OAUTH_CLIENT_ID = "308770941548-1mlflanlicqq21sah7odbo8jghacksu2.apps.googleusercontent.com"
-STARTING_BALANCE = 15
-DAILY_INCOME = 10
+STARTING_BALANCE = 50
+WEEKLY_INCOME = 25
 SAVINGS_APR = 0.015
 SAVINGS_DPR = SAVINGS_APR / 365
 
 # Constants
+DAYS_PER_WEEK = 7
 SECONDS_PER_DAY = 86400
 CHECKING = 0
 SAVINGS = 1
@@ -28,12 +29,23 @@ def log(*args, **kwargs):
     print(*args, **kwargs, file=sys.stderr)
 
 
+def elog(e, *args, **kwargs):
+    log(*args, "{}: {}".format(str(type(e)), str(e)), **kwargs)
+
+
+def user_parameter(user_id):
+    google_id, email = psql.single_query("SELECT google_id, email FROM users WHERE user_id=%s", user_id)
+    return User.lookup(google_id, email)
+
+
 def authenticate_user(token):
     try:
         idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_OAUTH_CLIENT_ID)
 
         if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+            log("User attempted to authenticate with wrong issuer: {}".format(idinfo['iss']))
             raise ValueError('wrong issuer')
+
 
         google_id = idinfo['sub']
         email = idinfo['email']
@@ -41,7 +53,9 @@ def authenticate_user(token):
         if not user.accounts:
             user.create_account(balance=STARTING_BALANCE)
         return user
-    except:
+
+    except Exception as e:
+        elog(e, "User failed to authenticate")
         abort(403, message="Failed to authenticate.")
         raise
 
@@ -68,22 +82,56 @@ class AuthStatus(Resource):
 
 
 class Status(Resource):
+    def put(self):
+        return {"status": "online"}
+
     def get(self):
         return {"status": "online"}
 
 
-class Balance(Resource):
+class NetWorth(Resource):
     def put(self):
         parser = AuthenticatedParser()
-        parser.add_argument('account', type=(lambda id: Account.lookup(id)), help='Invalid account id', required=True)
         args = parser.parse_args()
-        account = args["account"]
+
+        account = args["user"].checking
+        account.advance_time()
         return {"balance": float(account.balance)}
+
+
+class ListUsers(Resource):
+    def put(self):
+        parser = AuthenticatedParser()
+        args = parser.parse_args()
+
+        return {"users": psql.query("SELECT user_id, user_name FROM users")}
+
+
+class AcceptRequest(Resource):
+    pass
+
+
+class CreateRequest(Resource):
+    def put(self):
+        parser = AuthenticatedParser()
+        parser.add_argument('source', type=user_parameter, help='Invalid source user id', required=True)
+        parser.add_argument('destination', type=user_parameter, help='Invalid destination user id', required=True)
+        args = parser.parse_args()
+
+        user = args["user"]
+        source = args["source"]
+        destination = args["destination"]
+
+        if user != source and user != destination:
+            return {"error": "you cannot request a transfer that does not involve you"}
+
+        # TODO add a pending transaction
+        return {"success": "transfer requested"}
 
 
 api.add_resource(AuthStatus, '/authstatus')
 api.add_resource(Status, '/status')
-api.add_resource(Balance, '/balance')
+api.add_resource(NetWorth, '/net-worth')
 
 
 ###########
@@ -94,9 +142,19 @@ psql = PSQL("dbname=spaghetti")
 
 
 def add_transaction(date, source, destination, amount):
-    transaction = (date, source.account_id, destination.account_id, amount)
-    source.transactions.append(transaction)
-    destination.transactions.append(transaction)
+    if source is not None and destination is not None:
+        transaction = (date, source.account_id, destination.account_id, amount)
+        source.transactions.append(transaction)
+        destination.transactions.append(transaction)
+    elif source is not None:
+        transaction = (date, source.account_id, None, amount)
+        source.transactions.append(transaction)
+    elif destination is not None:
+        transaction = (date, None, destination.account_id, amount)
+        destination.transactions.append(transaction)
+    else:
+        raise ValueError("Source and destination can't both be None")
+
     psql.execute("""
         INSERT INTO transactions (transaction_time, from_id, to_id, amount)
         VALUES (%s, %s, %s, %s)
@@ -139,13 +197,13 @@ class Account:
         self.add_balance(amount)
 
     def add_balance(self, amount):
-        self.update_balance(self.balance + amount)
+        self.update_balance(self.balance + Decimal(amount))
 
     def subtract_balance(self, amount):
-        self.update_balance(self.balance - amount)
+        self.update_balance(self.balance - Decimal(amount))
 
     def update_balance(self, amount):
-        self.balance = amount
+        self.balance = Decimal(amount)
         psql.execute("""
             UPDATE accounts SET account_balance=%s WHERE account_id=%s
         """, (amount, self.account_id))
@@ -153,16 +211,21 @@ class Account:
     def advance_time(self):
         seconds_advanced = (datetime.now() - self.update_time).total_seconds()
         days_advanced = seconds_advanced // SECONDS_PER_DAY
-        if days_advanced <= 0:
-            return
+        weeks_advanced = days_advanced // DAYS_PER_WEEK
 
         if self.type == CHECKING:
-            self.add_balance(DAILY_INCOME * days_advanced)
+            if weeks_advanced <= 0:
+                return
+            self.add_balance(WEEKLY_INCOME * weeks_advanced)
+            self.update_time += timedelta(days=weeks_advanced * DAYS_PER_WEEK)
+
         elif self.type == SAVINGS:
+            if days_advanced <= 0:
+                return
             interest_rate = SAVINGS_DPR ** days_advanced
             self.add_balance(self.balance * interest_rate)
+            self.update_time += timedelta(days=days_advanced)
 
-        self.update_time += timedelta(days=days_advanced)
         psql.execute("""
             UPDATE accounts SET update_time=%s WHERE account_id=%s
         """, (self.update_time, self.account_id))
@@ -192,15 +255,17 @@ class User:
         self.google_id = google_id
         self.email = email
 
-        user_id = psql.single_query("SELECT user_id FROM users WHERE google_id=%s", (google_id,))
-        if user_id:
+        try:
+            user_id, username = psql.single_query("SELECT user_id, user_name FROM users WHERE google_id=%s", (google_id,))
             self.user_id = user_id
-        else:
+            self.username = username
+        except TypeError:
             self.user_id = psql.execute_and_return("""
-                INSERT INTO users (google_id, email)
-                VALUES (%s, %s)
+                INSERT INTO users (google_id, email, user_name)
+                VALUES (%s, %s, %s)
                 RETURNING user_id
-            """, (google_id, email))
+            """, (google_id, email, email))
+            self.username = email
 
         account_ids = psql.query("""
             SELECT account_id, account_name
@@ -209,10 +274,23 @@ class User:
 
         self.accounts = set()
         for account_id, name in account_ids:
-            Account.lookup(account_id)
-            self.accounts.add(account_id)
+            self.accounts.add(Account.lookup(account_id))
 
-    def create_account(self, name="Checking", type=CHECKING, balance=0):
+    def __eq__(self, other):
+        return self.user_id == other.user_id
+
+    def update_username(username):
+        self.username = username
+        psql.execute("UPDATE users SET user_name=%s WHERE user_id=%s", (username, self.user_id))
+
+    @property
+    def checking(self):
+        for account in self.accounts:
+            if account.type == CHECKING:
+                return account
+        return None
+
+    def create_account(self, name="Checking", type=CHECKING, balance=STARTING_BALANCE):
         account_uuid = str(uuid.uuid4())
         account_id = psql.execute_and_return(
             """
@@ -228,8 +306,9 @@ class User:
                 datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
             )
         )
-        self.accounts.add(account_id)
-        return Account.lookup(account_id)
+        account = Account.lookup(account_id)
+        self.accounts.add(account)
+        return account
 
     @classmethod
     def lookup(cls, google_id, email):
