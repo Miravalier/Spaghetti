@@ -33,9 +33,25 @@ def elog(e, *args, **kwargs):
     log(*args, "{}: {}".format(str(type(e)), str(e)), **kwargs)
 
 
+def account_parameter(account_id):
+    account = Account.lookup(account_id)
+    if not account:
+        raise ValueError("Invalid account id {}".format(account_id))
+    return account
+
+
 def user_parameter(user_id):
-    google_id, email = psql.single_query("SELECT google_id, email FROM users WHERE user_id=%s", user_id)
-    return User.lookup(google_id, email)
+    user = User.lookup(user_id)
+    if not user:
+        raise ValueError("Invalid user id {}".format(user_id))
+    return user
+
+
+def request_parameter(request_id):
+    request = Request.lookup(request_id)
+    if not request:
+        raise ValueError("Invalid request id {}".format(request_id))
+    return request
 
 
 def authenticate_user(token):
@@ -46,13 +62,9 @@ def authenticate_user(token):
             log("User attempted to authenticate with wrong issuer: {}".format(idinfo['iss']))
             raise ValueError('wrong issuer')
 
-
         google_id = idinfo['sub']
         email = idinfo['email']
-        user = User.lookup(google_id, email)
-        if not user.accounts:
-            user.create_account(balance=STARTING_BALANCE)
-        return user
+        return User.create(google_id, email)
 
     except Exception as e:
         elog(e, "User failed to authenticate")
@@ -63,7 +75,13 @@ def authenticate_user(token):
 class AuthenticatedParser(reqparse.RequestParser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.add_argument('idtoken', dest='user', type=authenticate_user, help='Invalid Google OAuth2 idtoken', required=True)
+        self.add_argument(
+            'idtoken',
+            dest='user',
+            type=authenticate_user,
+            help='Invalid Google OAuth2 idtoken',
+            required=True
+        )
 
 
 #############
@@ -107,31 +125,97 @@ class ListUsers(Resource):
         return {"users": psql.query("SELECT user_id, user_name FROM users")}
 
 
+class ListInboundRequests(Resource):
+    def put(self):
+        parser = AuthenticatedParser()
+        args = parser.parse_args()
+
+        user = args["user"]
+
+        return {"requests": user.inbound_requests}
+
+
+class ListOutboundRequests(Resource):
+    def put(self):
+        parser = AuthenticatedParser()
+        args = parser.parse_args()
+
+        user = args["user"]
+
+        return {"requests": user.outbound_requests}
+
+
+class DenyRequest(Resource):
+    def put(self):
+        parser = AuthenticatedParser()
+        parser.add_argument('request', type=request_parameter, help='Invalid request id', required=True)
+        args = parser.parse_args()
+
+        user = args["user"]
+        request = args["request"]
+        if request.source not in user.accounts:
+            return {"error": "you can't deny a transfer from someone else's account"}
+
+        try:
+            request.deny()
+            return {"success": "request accepted"}
+        except Exception as e:
+            return {"error": str(e)}
+
+
 class AcceptRequest(Resource):
-    pass
+    def put(self):
+        parser = AuthenticatedParser()
+        parser.add_argument('request', type=request_parameter, help='Invalid request id', required=True)
+        args = parser.parse_args()
+
+        user = args["user"]
+        request = args["request"]
+        if request.source not in user.accounts:
+            return {"error": "you can't approve a transfer from someone else's account"}
+
+        try:
+            request.accept()
+            return {"success": "request accepted"}
+        except Exception as e:
+            return {"error": str(e)}
 
 
-class CreateRequest(Resource):
+class CreateTransfer(Resource):
     def put(self):
         parser = AuthenticatedParser()
         parser.add_argument('source', type=user_parameter, help='Invalid source user id', required=True)
         parser.add_argument('destination', type=user_parameter, help='Invalid destination user id', required=True)
+        parser.add_argument('amount', type=Decimal, help='Invalid amount', required=True)
         args = parser.parse_args()
 
         user = args["user"]
-        source = args["source"]
-        destination = args["destination"]
+        source = args["source"].checking
+        destination = args["destination"].checking
+        amount = args["amount"]
 
-        if user != source and user != destination:
+        if source in user.accounts:
+            if source.balance > amount:
+                source.transfer_to(destination, amount)
+                return {"success": "transfer completed"}
+            else:
+                return {"error": "insufficient balance"}
+        elif destination in user.accounts:
+            Request.create(source, destination, amount)
+            return {"success": "transfer requested"}
+        else:
             return {"error": "you cannot request a transfer that does not involve you"}
-
-        # TODO add a pending transaction
-        return {"success": "transfer requested"}
 
 
 api.add_resource(AuthStatus, '/authstatus')
 api.add_resource(Status, '/status')
 api.add_resource(NetWorth, '/net-worth')
+api.add_resource(ListUsers, '/list-users')
+api.add_resource(CreateTransfer, '/transfer/create')
+api.add_resource(AcceptRequest, '/transfer/accept')
+api.add_resource(DenyRequest, '/transfer/deny')
+api.add_resource(ListInboundRequests, '/transfer/list-inbound')
+api.add_resource(ListOutboundRequests, '/transfer/list-outbound')
 
 
 ###########
@@ -161,6 +245,79 @@ def add_transaction(date, source, destination, amount):
     """, transaction)
 
 
+class Request:
+    cache = LRU(4096)
+
+    def __init__(self, creation_time, from_id, to_id, amount, request_id):
+        self.creation_time = creation_time
+        self.source = Account.lookup(from_id)
+        self.destination = Account.lookup(to_id)
+        self.amount = amount
+        self.request_id = request_id
+        self.deleted = False
+
+    def accept(self):
+        # Verify this request is still good
+        if self.deleted:
+            raise ValueError("Request no longer exists")
+        # Verify enough funds are available
+        if self.amount > self.source.balance:
+            raise ValueError("Not enough funds to cover the transaction")
+        # Delete request
+        self.deleted = True
+        psql.execute("DELETE FROM requests WHERE request_id=%s", (self.request_id,))
+        # Transfer funds
+        self.source.transfer_to(self.destination, self.amount)
+
+    def deny(self):
+        # Verify this request is still good
+        if self.deleted:
+            raise ValueError("Request no longer exists")
+        # Delete request
+        self.deleted = True
+        psql.execute("DELETE FROM requests WHERE request_id=%s", (self.request_id,))
+
+    @classmethod
+    def create(cls, source, destination, amount):
+        parameters = (datetime.now(), source.account_id, destination.account_id, Decimal(amount))
+        # Insert into database and get id
+        request_id = psql.execute_and_return(
+            """
+                INSERT INTO requests (creation_time, from_id, to_id, amount)
+                VALUES (%s, %s, %s, %s)
+                RETURNING request_id
+            """,
+            parameters
+        )
+        # Create request
+        request = cls(*parameters, request_id)
+        # Cache and return request
+        cls.cache[request_id] = request
+        return request
+
+    @classmethod
+    def lookup(cls, request_id):
+        # Check the cache
+        request = cls.cache.get(request_id, None)
+        if request is not None:
+            return request
+
+        # Query the database
+        request_query = """
+            SELECT creation_time, from_id, to_id, amount
+            FROM requests WHERE request_id=%s
+        """
+        response = psql.single_query(request_query, (request_id,))
+        if not response:
+            return None
+
+        # Update cache and return request
+        creation_time, from_id, to_id, amount = response
+        request = cls(creation_time, from_id, to_id, amount, request_id)
+        cls.cache[request_id] = request
+        return request
+
+
 class Account:
     cache = LRU(4096)
 
@@ -175,6 +332,20 @@ class Account:
             SELECT transaction_time, from_id, to_id, amount
             FROM transactions WHERE from_id=%s OR to_id=%s
         """, (account_id, account_id))
+
+    @property
+    def inbound_requests(self):
+        return [Request(*response) for response in psql.query("""
+            SELECT creation_time, from_id, to_id, amount, request_id
+            FROM requests WHERE from_id=%s
+        """, (self.account_id,))]
+
+    @property
+    def outbound_requests(self):
+        return [Request(*response) for response in psql.query("""
+            SELECT creation_time, from_id, to_id, amount, request_id
+            FROM requests WHERE to_id=%s
+        """, (self.account_id,))]
 
     def grant_funds(self, amount, date=None):
         if date is None:
@@ -232,16 +403,22 @@ class Account:
 
     @classmethod
     def lookup(cls, account_id):
+        # Check the cache
         account = cls.cache.get(account_id, None)
         if account is not None:
             account.advance_time()
             return account
 
-        account_type, name, account_uuid, balance, update_time = psql.single_query("""
+        # Query the database
+        response = psql.single_query("""
             SELECT account_type, account_name, account_uuid, account_balance, update_time
             FROM accounts WHERE account_id=%s
         """, (account_id,))
+        if not response:
+            return None
+        account_type, name, account_uuid, balance, update_time = response
 
+        # Update the cache and return the account
         account = cls(account_id, account_uuid, account_type, name, balance, update_time)
         cls.cache[account_id] = account
         account.advance_time()
@@ -251,21 +428,11 @@ class Account:
 class User:
     cache = LRU(1024)
 
-    def __init__(self, google_id, email):
+    def __init__(self, username, user_id, google_id, email):
+        self.username = username
+        self.user_id = user_id
         self.google_id = google_id
         self.email = email
-
-        try:
-            user_id, username = psql.single_query("SELECT user_id, user_name FROM users WHERE google_id=%s", (google_id,))
-            self.user_id = user_id
-            self.username = username
-        except TypeError:
-            self.user_id = psql.execute_and_return("""
-                INSERT INTO users (google_id, email, user_name)
-                VALUES (%s, %s, %s)
-                RETURNING user_id
-            """, (google_id, email, email))
-            self.username = email
 
         account_ids = psql.query("""
             SELECT account_id, account_name
@@ -282,6 +449,20 @@ class User:
     def update_username(username):
         self.username = username
         psql.execute("UPDATE users SET user_name=%s WHERE user_id=%s", (username, self.user_id))
+
+    @property
+    def inbound_requests(self):
+        requests = []
+        for account in self.accounts:
+            requests.extend(account.inbound_requests)
+        return requests
+
+    @property
+    def outbound_requests(self):
+        requests = []
+        for account in self.accounts:
+            requests.extend(account.outbound_requests)
+        return requests
 
     @property
     def checking(self):
@@ -311,12 +492,54 @@ class User:
         return account
 
     @classmethod
-    def lookup(cls, google_id, email):
-        user = cls.cache.get(google_id, None)
+    def lookup(cls, id):
+        # Check the cache
+        user = cls.cache.get(id, None)
         if user is not None:
             return user
 
-        user = cls(google_id, email)
+        # Build the query
+        lookup_query = "SELECT user_name, user_id, google_id, email FROM users WHERE"
+        if type(id) is int:
+            lookup_query += "user_id=%s"
+        elif type(id) is str:
+            lookup_query += "google_id=%s"
+        else:
+            raise TypeError("Invalid user id lookup type '{}'".format(type(id)))
+
+        # Query the database
+        response = psql.single_query(lookup_query, (id,))
+        if not response:
+            return None
+        username, user_id, google_id, email = response
+
+        # Store the user in the cache and return
+        user = cls(username, user_id, google_id, email)
+        cls.cache[user_id] = user
+        cls.cache[google_id] = user
+        return user
+
+    @classmethod
+    def create(cls, google_id, email, username=None):
+        if username is None:
+            username = email
+
+        # Make sure this user doesn't exist
+        user = cls.lookup(google_id)
+        if user:
+            return user
+
+        # Insert a new user
+        user_id = psql.execute_and_return("""
+            INSERT INTO users (google_id, email, user_name)
+            VALUES (%s, %s, %s)
+            RETURNING user_id
+        """, (google_id, email, username))
+        user = cls(username, user_id, google_id, email)
+        user.create_account(balance=STARTING_BALANCE)
+
+        # Update the cache
+        cls.cache[user_id] = user
         cls.cache[google_id] = user
         return user
 

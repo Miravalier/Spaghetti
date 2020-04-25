@@ -23,3 +23,4 @@ uninstall:
 	sudo systemctl daemon-reload
 
 .PHONY: install uninstall
+.DEFAULT_GOAL := install

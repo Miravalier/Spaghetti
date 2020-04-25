@@ -4,5 +4,6 @@ CREATE TABLE transactions (
     from_id             integer,
     to_id               integer,
     amount              numeric,
+
     transaction_id serial PRIMARY KEY
 );
