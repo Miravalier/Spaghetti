@@ -8,4 +8,6 @@
     <color name="colorTextLight">#C6C6C6</color>
     <color name="colorTextDark">#000000</color>
     <color name="colorTextLightSecondary">#707070</color>
+    <color name="colorAccept">#71E160</color>
+    <color name="colorDeny">#B80000</color>
 </resources>

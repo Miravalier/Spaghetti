@@ -29,7 +29,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
-        android:text="..."
+        android:text="Alxl"
         android:textColor="@color/colorTextLight"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -43,12 +43,24 @@
         android:layout_width="168dp"
         android:layout_height="38dp"
         android:gravity="center_vertical|center_horizontal"
-        android:text="... sp"
+        android:text="125 sp"
         android:textColor="@color/colorTextLight"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/checking_list_divider"
         app:layout_constraintStart_toStartOf="@+id/checking_list_divider"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/cancel_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/colorDeny"
+        android:text="@string/cancel"
+        android:textColor="@color/colorTextLight"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/requested_spaghetti"
         app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

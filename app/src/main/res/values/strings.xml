@@ -35,4 +35,5 @@
     <string name="steaming_spaghetti_plate">Steaming Spaghetti Plate</string>
     <string name="savings_accounts_header">Current Savings Accounts</string>
     <string name="home_fragment_label">Net Worth</string>
+    <string name="cancel">Cancel</string>
 </resources>
