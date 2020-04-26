@@ -14,7 +14,7 @@ import dev.miramontes.spaghetti.library.getIdToken
 import okhttp3.internal.threadName
 
 class TransferFragment : Fragment() {
-    private var idToken: String = "NO_TOKEN";
+    private var idToken: String = "NO_TOKEN"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,8 +36,6 @@ class TransferFragment : Fragment() {
             // Get list of users
             serverConnection.listUsers(
                 Response.Listener { response ->
-                    Log.e("Spaghetti", "Response: " + response.toString(4))
-
                     // Split user ids and user names into lists
                     val users = response.getJSONArray("users")
                     val userIds = mutableListOf<Long>()
@@ -49,7 +47,6 @@ class TransferFragment : Fragment() {
                     }
 
                     // Hook up spinners
-
                     val arrayAdapter = ArrayAdapter(
                         activity,
                         R.layout.activity_spinner_dark,
@@ -76,7 +73,21 @@ class TransferFragment : Fragment() {
                                 userIds[toSpinner.selectedItemPosition],
                                 amount,
                                 Response.Listener { response ->
-                                    Log.e("Spaghetti", "Response: " + response.toString(4))
+                                    amountField.setText("")
+                                    if (response.opt("success") != null) {
+                                        Toast.makeText(
+                                            activity,
+                                            R.string.transfer_complete,
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                    else {
+                                        Toast.makeText(
+                                            activity,
+                                            R.string.transfer_failed,
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
                                 },
                                 Response.ErrorListener {
                                     Log.e("Spaghetti", "Failed to Authenticate with the server")

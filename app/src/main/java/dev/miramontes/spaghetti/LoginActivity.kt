@@ -27,6 +27,7 @@ class LoginActivity : AppCompatActivity() {
         // Activate sign in button
         val googleSignInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(resources.getString(R.string.google_client_id))
+            .requestProfile()
             .requestEmail()
             .build()
 

@@ -24,12 +24,11 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/requestor"
+        android:id="@+id/requester"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
-        android:text="Benjamin"
         android:textColor="@color/colorTextLight"
         android:textSize="24sp"
         app:layout_constraintEnd_toStartOf="@+id/checking_list_divider"
@@ -44,14 +43,13 @@
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
         android:gravity="center_vertical"
-        android:text="1000 sp"
         android:textColor="@color/colorTextLight"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/checking_list_divider"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/requestor"
+        app:layout_constraintTop_toBottomOf="@+id/requester"
         app:layout_constraintVertical_bias="0.0" />
 
     <Button
@@ -63,7 +61,7 @@
         android:width="83dp"
         android:height="45dp"
         android:background="@color/colorAccept"
-        android:text="Send"
+        android:text="@string/send"
         android:textColor="@color/colorTextDark"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -80,7 +78,7 @@
         android:width="80dp"
         android:height="43dp"
         android:background="@color/colorTextLight"
-        android:text="Deny"
+        android:text="@string/deny"
         android:textColor="@color/colorTextDark"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/accept_button"

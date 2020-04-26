@@ -39,4 +39,10 @@
     <string name="cancel">Cancel</string>
     <string name="send_request">Send / Request</string>
     <string name="amount">amount</string>
+    <string name="transfer_complete">Transfer submitted.</string>
+    <string name="transfer_failed">You cannot request transfers that do not involve you.</string>
+    <string name="outbound">Outbound</string>
+    <string name="inbound">Inbound</string>
+    <string name="send">Send</string>
+    <string name="deny">Deny</string>
 </resources>
