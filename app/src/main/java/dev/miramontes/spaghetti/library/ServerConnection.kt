@@ -86,7 +86,7 @@ class ServerConnection(private val context: Context, private val idToken: String
         queue.add(request)
     }
 
-    fun acceptRequest(requestId: Int, successListener: Response.Listener<JSONObject>, errorListener: Response.ErrorListener) {
+    fun acceptRequest(requestId: Long, successListener: Response.Listener<JSONObject>, errorListener: Response.ErrorListener) {
         // Create json parameters
         val jsonParameters = JSONObject()
         jsonParameters.put("idtoken", idToken)
@@ -105,7 +105,7 @@ class ServerConnection(private val context: Context, private val idToken: String
         queue.add(request)
     }
 
-    fun denyRequest(requestId: Int, successListener: Response.Listener<JSONObject>, errorListener: Response.ErrorListener) {
+    fun denyRequest(requestId: Long, successListener: Response.Listener<JSONObject>, errorListener: Response.ErrorListener) {
         // Create json parameters
         val jsonParameters = JSONObject()
         jsonParameters.put("idtoken", idToken)

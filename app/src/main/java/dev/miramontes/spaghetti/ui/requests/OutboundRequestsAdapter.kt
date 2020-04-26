@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
 import dev.miramontes.spaghetti.R
+import dev.miramontes.spaghetti.library.ServerConnection
 
 class OutboundViewHolder (view: View) : RecyclerView.ViewHolder(view) {
     val requesterText: TextView = view.findViewById(R.id.requester)
@@ -19,6 +20,7 @@ class OutboundViewHolder (view: View) : RecyclerView.ViewHolder(view) {
 
 class OutboundRequestsAdapter(
         private val ctx: Context,
+        private val serverConnection: ServerConnection,
         private val toUsers: MutableLiveData<MutableList<String>>,
         private val amounts: MutableLiveData<MutableList<Double>>,
         private val requestIds: MutableLiveData<MutableList<Long>>

@@ -1,14 +1,18 @@
 package dev.miramontes.spaghetti.ui.requests
 
-import android.content.Context
+import android.app.Activity
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
+import com.android.volley.Response
 import dev.miramontes.spaghetti.R
+import dev.miramontes.spaghetti.library.ServerConnection
 
 
 class InboundViewHolder (view: View) : RecyclerView.ViewHolder(view) {
@@ -19,7 +23,8 @@ class InboundViewHolder (view: View) : RecyclerView.ViewHolder(view) {
 }
 
 class InboundRequestsAdapter(
-        private val ctx: Context,
+        private val ctx: Activity,
+        private val serverConnection: ServerConnection,
         private val fromUsers: MutableLiveData<MutableList<String>>,
         private val amounts: MutableLiveData<MutableList<Double>>,
         private val requestIds: MutableLiveData<MutableList<Long>>
@@ -38,7 +43,62 @@ class InboundRequestsAdapter(
     override fun onBindViewHolder(holder: InboundViewHolder, position: Int) {
         holder.requesterText.text = fromUsers.value?.get(position) ?: ""
         holder.amountText.text = String.format("%.2f", amounts.value?.get(position) ?: 0.0)
-        // TODO accept button
-        // TODO cancel button
+        requestIds.value?.let { requestIds ->
+            val requestId = requestIds[position]
+            // Bind accept button
+            holder.acceptButton.setOnClickListener {
+                serverConnection.acceptRequest(
+                    requestId,
+                    Response.Listener { response ->
+                        if (response.opt("success") != null) {
+                            Toast.makeText(
+                                ctx,
+                                R.string.request_accept_success,
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        else {
+                            Log.e("Spaghetti", response.toString(4))
+                            Toast.makeText(
+                                ctx,
+                                R.string.request_accept_fail,
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    },
+                    Response.ErrorListener {
+                        Log.e("Spaghetti", "Failed to Authenticate with the server")
+                        ctx.finish()
+                    }
+                )
+            }
+            // Bind deny button
+            holder.denyButton.setOnClickListener {
+                serverConnection.denyRequest(
+                    requestId,
+                    Response.Listener { response ->
+                        if (response.opt("success") != null) {
+                            Toast.makeText(
+                                ctx,
+                                R.string.request_deny_success,
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        else {
+                            Log.e("Spaghetti", response.toString(4))
+                            Toast.makeText(
+                                ctx,
+                                R.string.request_deny_fail,
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    },
+                    Response.ErrorListener {
+                        Log.e("Spaghetti", "Failed to Authenticate with the server")
+                        ctx.finish()
+                    }
+                )
+            }
+        }
     }
 }
