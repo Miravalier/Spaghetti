@@ -11,10 +11,9 @@
     <View
         android:id="@+id/checking_list_divider"
         android:layout_width="1dp"
-        android:layout_height="50dp"
+        android:layout_height="20dp"
         android:layout_marginStart="201dp"
         android:layout_marginLeft="201dp"
-        android:layout_marginTop="1dp"
         android:layout_marginEnd="209dp"
         android:layout_marginRight="209dp"
         android:background="#00FFFFFF"
@@ -25,40 +24,46 @@
 
     <TextView
         android:id="@+id/requester"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="200dp"
+        android:layout_height="20dp"
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
         android:textColor="@color/colorTextLight"
-        android:textSize="24sp"
+        android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/checking_list_divider"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.25" />
 
     <TextView
         android:id="@+id/requested_spaghetti"
-        android:layout_width="168dp"
-        android:layout_height="38dp"
-        android:gravity="center_vertical|center_horizontal"
+        android:layout_width="200dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
         android:textColor="@color/colorTextLight"
-        android:textSize="24sp"
+        android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/checking_list_divider"
-        app:layout_constraintStart_toStartOf="@+id/checking_list_divider"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toStartOf="@+id/checking_list_divider"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/requester" />
 
     <Button
         android:id="@+id/cancel_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
         android:background="@color/colorDeny"
         android:text="@string/cancel"
         android:textColor="@color/colorTextLight"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/requested_spaghetti"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/checking_list_divider"
         app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
