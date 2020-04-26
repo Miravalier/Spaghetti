@@ -30,7 +30,7 @@ def log(*args, **kwargs):
 
 
 def elog(e, *args, **kwargs):
-    log(*args, "{}: {}".format(str(type(e)), str(e)), **kwargs)
+    log(*args, "{}: {}".format(str(type(e).__name__), str(e)), **kwargs)
 
 
 def account_parameter(account_id):
@@ -153,8 +153,9 @@ class DenyRequest(Resource):
 
         user = args["user"]
         request = args["request"]
-        if request.source not in user.accounts:
-            return {"error": "you can't deny a transfer from someone else's account"}
+        if request.source.owner != user and request.destination.owner != user:
+            log("Request: {}, User: {}".format(request, user))
+            return {"error": "you can't deny a transfer that does not involve you"}
 
         try:
             request.deny()
@@ -171,7 +172,8 @@ class AcceptRequest(Resource):
 
         user = args["user"]
         request = args["request"]
-        if request.source not in user.accounts:
+        if request.source.owner != user:
+            log("Request: {}, User: {}".format(request, user))
             return {"error": "you can't approve a transfer from someone else's account"}
 
         try:
@@ -207,6 +209,18 @@ class CreateTransfer(Resource):
             return {"error": "you cannot request a transfer that does not involve you"}
 
 
+class UpdateUsername(Resource):
+    def put(self):
+        parser = AuthenticatedParser()
+        parser.add_argument('username', type=str, help='Invalid username', required=True)
+        args = parser.parse_args
+
+        user = args["user"]
+        user.update_username(args["username"])
+
+        return {"success": "username updated"}
+
+
 api.add_resource(AuthStatus, '/authstatus')
 api.add_resource(Status, '/status')
 api.add_resource(NetWorth, '/net-worth')
@@ -216,6 +230,7 @@ api.add_resource(AcceptRequest, '/transfer/accept')
 api.add_resource(DenyRequest, '/transfer/deny')
 api.add_resource(ListInboundRequests, '/transfer/list-inbound')
 api.add_resource(ListOutboundRequests, '/transfer/list-outbound')
+api.add_resource(UpdateUsername, '/update-username')
 
 
 ###########
@@ -255,6 +270,13 @@ class Request:
         self.amount = amount
         self.request_id = request_id
         self.deleted = False
+
+    def __str__(self):
+        return "Request(id={}, {} -> {}, amount={})".format(
+            self.request_id, self.source, self.destination, self.amount
+        )
+
+    __repr__ = __str__
 
     def accept(self):
         # Verify this request is still good
@@ -321,7 +343,8 @@ class Request:
 class Account:
     cache = LRU(4096)
 
-    def __init__(self, account_id, account_uuid, account_type, name, balance, update_time):
+    def __init__(self, user_id, account_id, account_uuid, account_type, name, balance, update_time):
+        self.user_id = user_id
         self.account_id = account_id
         self.uuid = account_uuid
         self.type = account_type
@@ -333,19 +356,46 @@ class Account:
             FROM transactions WHERE from_id=%s OR to_id=%s
         """, (account_id, account_id))
 
+    def __str__(self):
+        return "Account(id={}, balance={})".format(self.account_id, self.balance)
+    
+    __repr__ = __str__
+
+    @property
+    def owner(self):
+        return User.lookup(self.user_id)
+
     @property
     def inbound_requests(self):
-        return [Request(*response) for response in psql.query("""
-            SELECT creation_time, from_id, to_id, amount, request_id
-            FROM requests WHERE from_id=%s
-        """, (self.account_id,))]
+        request_values = psql.query(
+            "SELECT from_id, to_id, amount, request_id FROM requests WHERE from_id=%s",
+            (self.account_id,)
+        )
+        requests = []
+        for from_id, to_id, amount, request_id in request_values:
+            requests.append((
+                Account.lookup(from_id).owner.username,
+                Account.lookup(to_id).owner.username,
+                float(amount),
+                request_id
+            ))
+        return requests
 
     @property
     def outbound_requests(self):
-        return [Request(*response) for response in psql.query("""
-            SELECT creation_time, from_id, to_id, amount, request_id
-            FROM requests WHERE to_id=%s
-        """, (self.account_id,))]
+        request_values = psql.query(
+            "SELECT from_id, to_id, amount, request_id FROM requests WHERE to_id=%s",
+            (self.account_id,)
+        )
+        requests = []
+        for from_id, to_id, amount, request_id in request_values:
+            requests.append((
+                Account.lookup(from_id).owner.username,
+                Account.lookup(to_id).owner.username,
+                float(amount),
+                request_id
+            ))
+        return requests
 
     def grant_funds(self, amount, date=None):
         if date is None:
@@ -411,15 +461,15 @@ class Account:
 
         # Query the database
         response = psql.single_query("""
-            SELECT account_type, account_name, account_uuid, account_balance, update_time
+            SELECT user_id, account_type, account_name, account_uuid, account_balance, update_time
             FROM accounts WHERE account_id=%s
         """, (account_id,))
         if not response:
             return None
-        account_type, name, account_uuid, balance, update_time = response
+        user_id, account_type, name, account_uuid, balance, update_time = response
 
         # Update the cache and return the account
-        account = cls(account_id, account_uuid, account_type, name, balance, update_time)
+        account = cls(user_id, account_id, account_uuid, account_type, name, balance, update_time)
         cls.cache[account_id] = account
         account.advance_time()
         return account
@@ -442,6 +492,11 @@ class User:
         self.accounts = set()
         for account_id, name in account_ids:
             self.accounts.add(Account.lookup(account_id))
+
+    def __str__(self):
+        return "User(id={}, name={})".format(self.user_id, self.username[:8])
+
+    __repr__ = __str__
 
     def __eq__(self, other):
         return self.user_id == other.user_id
@@ -499,7 +554,7 @@ class User:
             return user
 
         # Build the query
-        lookup_query = "SELECT user_name, user_id, google_id, email FROM users WHERE"
+        lookup_query = "SELECT user_name, user_id, google_id, email FROM users WHERE "
         if type(id) is int:
             lookup_query += "user_id=%s"
         elif type(id) is str:
@@ -522,7 +577,7 @@ class User:
     @classmethod
     def create(cls, google_id, email, username=None):
         if username is None:
-            username = email
+            username = email.replace('@gmail.com', '')
 
         # Make sure this user doesn't exist
         user = cls.lookup(google_id)
