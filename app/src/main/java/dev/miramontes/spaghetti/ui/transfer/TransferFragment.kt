@@ -49,17 +49,15 @@ class TransferFragment : Fragment() {
                     }
 
                     // Hook up spinners
-                    fromSpinner.adapter = ArrayAdapter(
-                        activity,
-                        android.R.layout.simple_spinner_item,
-                        userNames
-                    )
 
-                    toSpinner.adapter = ArrayAdapter(
+                    val arrayAdapter = ArrayAdapter(
                         activity,
-                        android.R.layout.simple_spinner_item,
+                        R.layout.activity_spinner_dark,
                         userNames
                     )
+                    arrayAdapter.setDropDownViewResource(R.layout.activity_spinner_dark_item)
+                    fromSpinner.adapter = arrayAdapter
+                    toSpinner.adapter = arrayAdapter
 
                     // Hook up submit button
                     submitButton.setOnClickListener {
