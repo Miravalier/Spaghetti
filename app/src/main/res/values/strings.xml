@@ -45,4 +45,8 @@
     <string name="inbound">Inbound</string>
     <string name="send">Send</string>
     <string name="deny">Deny</string>
+    <string name="request_accept_success">Accepted request.</string>
+    <string name="request_accept_fail">Failed to accept request.</string>
+    <string name="request_deny_success">Denied request.</string>
+    <string name="request_deny_fail">Failed to deny request.</string>
 </resources>

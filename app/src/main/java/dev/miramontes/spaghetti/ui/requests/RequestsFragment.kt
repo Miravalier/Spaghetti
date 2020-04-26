@@ -42,19 +42,18 @@ class RequestsFragment : Fragment() {
 
             // Attach adapters
             outboundView.adapter = OutboundRequestsAdapter(
-                activity, toUsers, toAmounts, toRequestIds
+                activity, serverConnection, toUsers, toAmounts, toRequestIds
             )
             outboundView.layoutManager = LinearLayoutManager(context)
 
             inboundView.adapter = InboundRequestsAdapter(
-                activity, fromUsers, fromAmounts, fromRequestIds
+                activity, serverConnection, fromUsers, fromAmounts, fromRequestIds
             )
             inboundView.layoutManager = LinearLayoutManager(context)
 
             // Make network requests to update watchable data
             serverConnection.listOutboundRequests(
                 Response.Listener { response ->
-                    Log.e("Spaghetti", "Response: " + response.toString(4))
                     // Split reply into lists
                     val requests = response.getJSONArray("requests")
                     val users = mutableListOf<String>()
