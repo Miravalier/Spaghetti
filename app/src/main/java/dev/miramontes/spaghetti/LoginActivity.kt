@@ -58,8 +58,6 @@ class LoginActivity : AppCompatActivity() {
             try {
                 val account = GoogleSignIn.getSignedInAccountFromIntent(data).result
                 if (account != null) {
-                    val idToken = account.idToken
-
                     onLogin(account)
                 }
                 else {
@@ -68,7 +66,6 @@ class LoginActivity : AppCompatActivity() {
             }
             catch (e: RuntimeException) {
                 Log.e("Spaghetti", "Failed to log in: " + e.message)
-                Log.e("Spaghetti", GoogleSignInStatusCodes.getStatusCodeString(8))
                 onError()
             }
         }

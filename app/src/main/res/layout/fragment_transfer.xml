@@ -7,7 +7,7 @@
     android:background="@color/colorBackground">
 
     <Spinner
-        android:id="@+id/spinner5"
+        android:id="@+id/toSpinner"
         android:layout_width="266dp"
         android:layout_height="92dp"
         android:layout_marginTop="8dp"
@@ -15,10 +15,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView7" />
+        app:layout_constraintTop_toBottomOf="@+id/toLabel" />
 
     <TextView
-        android:id="@+id/textView7"
+        android:id="@+id/toLabel"
         android:layout_width="81dp"
         android:layout_height="36dp"
         android:layout_marginTop="32dp"
@@ -28,10 +28,10 @@
         android:textColor="@color/colorTextLight"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/spinner2" />
+        app:layout_constraintTop_toBottomOf="@+id/fromSpinner" />
 
     <TextView
-        android:id="@+id/textView5"
+        android:id="@+id/fromLabel"
         android:layout_width="81dp"
         android:layout_height="36dp"
         android:layout_marginBottom="8dp"
@@ -39,13 +39,13 @@
         android:text="@string/from"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         android:textColor="@color/colorTextLight"
-        app:layout_constraintBottom_toTopOf="@+id/spinner2"
+        app:layout_constraintBottom_toTopOf="@+id/fromSpinner"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/textView9"
+        android:id="@+id/spaghettiLabel"
         android:layout_width="76dp"
         android:layout_height="50dp"
         android:layout_marginStart="37dp"
@@ -54,39 +54,39 @@
         android:text="@string/spaghetti"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         android:textColor="@color/colorTextLight"
-        app:layout_constraintBottom_toBottomOf="@+id/editText2"
-        app:layout_constraintStart_toEndOf="@+id/divider3"
-        app:layout_constraintTop_toTopOf="@+id/editText2"
+        app:layout_constraintBottom_toBottomOf="@+id/amountField"
+        app:layout_constraintStart_toEndOf="@+id/verticalDivider"
+        app:layout_constraintTop_toTopOf="@+id/amountField"
         app:layout_constraintVertical_bias="0.0" />
 
     <Spinner
-        android:id="@+id/spinner2"
+        android:id="@+id/fromSpinner"
         android:layout_width="266dp"
         android:layout_height="92dp"
         android:gravity="center|center_vertical"
-        app:layout_constraintBottom_toTopOf="@+id/divider4"
+        app:layout_constraintBottom_toTopOf="@+id/horizontalDivider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintStart_toStartOf="parent" />
 
     <EditText
-        android:id="@+id/editText2"
+        android:id="@+id/amountField"
         android:layout_width="150dp"
         android:layout_height="50dp"
         android:layout_marginBottom="40dp"
-        android:contentDescription="@string/spaghetti"
         android:ems="10"
         android:gravity="center|center_vertical"
+        android:hint="@string/spaghetti"
         android:importantForAutofill="no"
         android:inputType="number"
         android:textColorHighlight="@color/colorBlue"
         android:textColorLink="#558DE2"
         android:textCursorDrawable="@color/colorBlue"
-        app:layout_constraintBottom_toTopOf="@+id/textView5"
-        app:layout_constraintEnd_toStartOf="@+id/textView9" />
+        app:layout_constraintBottom_toTopOf="@+id/fromLabel"
+        app:layout_constraintEnd_toStartOf="@+id/spaghettiLabel" />
 
     <View
-        android:id="@+id/divider3"
+        android:id="@+id/verticalDivider"
         android:layout_width="1dp"
         android:layout_height="match_parent"
         android:background="?android:attr/listDivider"
@@ -96,7 +96,7 @@
         tools:layout_editor_absoluteY="16dp" />
 
     <View
-        android:id="@+id/divider4"
+        android:id="@+id/horizontalDivider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="?android:attr/listDivider"
@@ -106,15 +106,15 @@
         tools:layout_editor_absoluteX="0dp" />
 
     <Button
-        android:id="@+id/button2"
+        android:id="@+id/submitButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:background="@color/colorTextLight"
-        android:text="Send / Request"
+        android:text="@string/send_request"
         android:textColor="@color/colorTextDark"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/spinner5" />
+        app:layout_constraintTop_toBottomOf="@+id/toSpinner" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,16 +1,7 @@
 package dev.miramontes.spaghetti.library
 
-import android.app.Activity
 import android.content.Context
-import com.android.volley.Request
-import com.android.volley.RequestQueue
-import com.android.volley.Response
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
-import com.google.android.gms.tasks.OnSuccessListener
 import dev.miramontes.spaghetti.R
-import org.json.JSONObject
-import javax.xml.transform.ErrorListener
 import kotlin.random.Random
 
 
@@ -149,44 +140,4 @@ fun getIdToken(context: Context): String? {
         context.resources.getString(R.string.preference_file_key), Context.MODE_PRIVATE
     )
     return preferences.getString(context.resources.getString(R.string.id_token), null)
-}
-
-class ServerConnection(private val context: Context, private val idToken: String) {
-    private val queue: RequestQueue = Volley.newRequestQueue(context)
-
-    fun status(successListener: Response.Listener<JSONObject>, errorListener: Response.ErrorListener) {
-        // Create json parameters
-        val jsonParameters = JSONObject()
-        jsonParameters.put("idtoken", idToken)
-
-        // Request a string response from the provided URL.
-        val request = JsonObjectRequest(
-            Request.Method.PUT,
-            "https://spaghetti.miramontes.dev/authstatus",
-            jsonParameters,
-            successListener,
-            errorListener
-        )
-
-        // Add the request to the RequestQueue.
-        queue.add(request)
-    }
-
-    fun netWorth(successListener: Response.Listener<JSONObject>, errorListener: Response.ErrorListener) {
-        // Create json parameters
-        val jsonParameters = JSONObject()
-        jsonParameters.put("idtoken", idToken)
-
-        // Request a string response from the provided URL.
-        val request = JsonObjectRequest(
-            Request.Method.PUT,
-            "https://spaghetti.miramontes.dev/net-worth",
-            jsonParameters,
-            successListener,
-            errorListener
-        )
-
-        // Add the request to the RequestQueue.
-        queue.add(request)
-    }
 }

@@ -14,7 +14,7 @@ import dev.miramontes.spaghetti.library.ServerConnection
 import dev.miramontes.spaghetti.library.getIdToken
 
 class HomeFragment : Fragment() {
-    private var idToken: String? = null
+    private var idToken: String = "NO_TOKEN";
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -24,15 +24,18 @@ class HomeFragment : Fragment() {
         val root = inflater.inflate(R.layout.fragment_home, container, false)
         val amountTextView = root.findViewById<TextView>(R.id.amount)
 
-        if (idToken != null && activity != null) {
-            val serverConnection = ServerConnection(activity!!, idToken!!)
+        activity?.let{ activity ->
+            getIdToken(activity)?.let { newToken ->
+                idToken = newToken
+            }
+            val serverConnection = ServerConnection(activity, idToken)
             serverConnection.netWorth(
                 Response.Listener {response ->
                     amountTextView.text = String.format("%.2f spaghetti", response.getDouble("balance"))
                 },
                 Response.ErrorListener {
                     Log.e("Spaghetti","Failed to Authenticate with the server")
-                    activity?.finish()
+                    activity.finish()
                 }
             )
         }
@@ -43,8 +46,11 @@ class HomeFragment : Fragment() {
     override fun onAttach(context: Context) {
         super.onAttach(context)
 
-        idToken = getIdToken(context)
-        if (idToken == null) {
+        getIdToken(context)?.let { newToken ->
+            idToken = newToken
+        }
+
+        if (idToken == "NO_TOKEN") {
             activity?.finish()
         }
     }
