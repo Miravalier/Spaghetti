@@ -26,8 +26,8 @@ class InboundRequestsAdapter(
         private val ctx: Activity,
         private val serverConnection: ServerConnection,
         private val fromUsers: MutableLiveData<MutableList<String>>,
-        private val amounts: MutableLiveData<MutableList<Double>>,
-        private val requestIds: MutableLiveData<MutableList<Long>>
+        private val fromAmounts: MutableLiveData<MutableList<Double>>,
+        private val fromRequestIds: MutableLiveData<MutableList<Long>>
     ) : RecyclerView.Adapter<InboundViewHolder>() {
 
     override fun getItemCount(): Int {
@@ -42,8 +42,8 @@ class InboundRequestsAdapter(
 
     override fun onBindViewHolder(holder: InboundViewHolder, position: Int) {
         holder.requesterText.text = fromUsers.value?.get(position) ?: ""
-        holder.amountText.text = String.format("%.2f", amounts.value?.get(position) ?: 0.0)
-        requestIds.value?.let { requestIds ->
+        holder.amountText.text = String.format("%.2f", fromAmounts.value?.get(position) ?: 0.0)
+        fromRequestIds.value?.let { requestIds ->
             val requestId = requestIds[position]
             // Bind accept button
             holder.acceptButton.setOnClickListener {
@@ -56,6 +56,7 @@ class InboundRequestsAdapter(
                                 R.string.request_accept_success,
                                 Toast.LENGTH_LONG
                             ).show()
+                            NetworkUpdate()
                         }
                         else {
                             Log.e("Spaghetti", response.toString(4))
@@ -83,6 +84,7 @@ class InboundRequestsAdapter(
                                 R.string.request_deny_success,
                                 Toast.LENGTH_LONG
                             ).show()
+                            NetworkUpdate()
                         }
                         else {
                             Log.e("Spaghetti", response.toString(4))
@@ -100,5 +102,32 @@ class InboundRequestsAdapter(
                 )
             }
         }
+    }
+
+    fun NetworkUpdate() {
+        // Make network requests to update watchable data
+        serverConnection.listInboundRequests(
+            Response.Listener { response ->
+                // Split reply into lists
+                val requests = response.getJSONArray("requests")
+                val users = mutableListOf<String>()
+                val amounts = mutableListOf<Double>()
+                val requestIds = mutableListOf<Long>()
+                for (i in 0 until requests.length()) {
+                    val request = requests.getJSONArray(i)
+                    users.add(request.getString(1))
+                    amounts.add(request.getDouble(2))
+                    requestIds.add(request.getLong(3))
+                }
+                fromUsers.value = users
+                fromAmounts.value = amounts
+                fromRequestIds.value = requestIds
+                this.notifyDataSetChanged()
+            },
+            Response.ErrorListener {
+                Log.e("Spaghetti","Failed to Authenticate with the server")
+                ctx.finish()
+            }
+        )
     }
 }

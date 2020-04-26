@@ -49,4 +49,6 @@
     <string name="request_accept_fail">Failed to accept request.</string>
     <string name="request_deny_success">Denied request.</string>
     <string name="request_deny_fail">Failed to deny request.</string>
+    <string name="request_cancel_success">Cancelled request.</string>
+    <string name="request_cancel_fail">Failed to cancel request.</string>
 </resources>

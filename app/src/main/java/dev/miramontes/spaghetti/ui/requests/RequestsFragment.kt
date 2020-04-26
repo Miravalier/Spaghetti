@@ -1,7 +1,6 @@
 package dev.miramontes.spaghetti.ui.requests
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,7 +8,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.android.volley.Response
 import dev.miramontes.spaghetti.R
 import dev.miramontes.spaghetti.library.ServerConnection
 import dev.miramontes.spaghetti.library.getIdToken
@@ -51,53 +49,9 @@ class RequestsFragment : Fragment() {
             )
             inboundView.layoutManager = LinearLayoutManager(context)
 
-            // Make network requests to update watchable data
-            serverConnection.listOutboundRequests(
-                Response.Listener { response ->
-                    // Split reply into lists
-                    val requests = response.getJSONArray("requests")
-                    val users = mutableListOf<String>()
-                    val amounts = mutableListOf<Double>()
-                    val requestIds = mutableListOf<Long>()
-                    for (i in 0 until requests.length()) {
-                        val request = requests.getJSONArray(i)
-                        users.add(request.getString(1))
-                        amounts.add(request.getDouble(2))
-                        requestIds.add(request.getLong(3))
-                    }
-                    toUsers.value = users
-                    toAmounts.value = amounts
-                    toRequestIds.value = requestIds
-                    (outboundView.adapter as OutboundRequestsAdapter).notifyDataSetChanged()
-                },
-                Response.ErrorListener {
-                    Log.e("Spaghetti","Failed to Authenticate with the server")
-                    activity.finish()
-                }
-            )
-            serverConnection.listInboundRequests(
-                Response.Listener { response ->
-                    // Split reply into lists
-                    val requests = response.getJSONArray("requests")
-                    val users = mutableListOf<String>()
-                    val amounts = mutableListOf<Double>()
-                    val requestIds = mutableListOf<Long>()
-                    for (i in 0 until requests.length()) {
-                        val request = requests.getJSONArray(i)
-                        users.add(request.getString(0))
-                        amounts.add(request.getDouble(2))
-                        requestIds.add(request.getLong(3))
-                    }
-                    fromUsers.value = users
-                    fromAmounts.value = amounts
-                    fromRequestIds.value = requestIds
-                    (inboundView.adapter as InboundRequestsAdapter).notifyDataSetChanged()
-                },
-                Response.ErrorListener {
-                    Log.e("Spaghetti","Failed to Authenticate with the server")
-                    activity.finish()
-                }
-            )
+            // Perform network IO to fill data
+            (outboundView.adapter as OutboundRequestsAdapter).NetworkUpdate()
+            (inboundView.adapter as InboundRequestsAdapter).NetworkUpdate()
         }
 
         return root

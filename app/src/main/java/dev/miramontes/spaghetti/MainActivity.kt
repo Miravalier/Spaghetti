@@ -56,10 +56,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.action_settings -> {
-                Log.e("Spaghetti", "Settings not implemented")
-                true
-            }
             R.id.action_sign_out -> {
                 // Sign out of google
                 val googleSignInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
