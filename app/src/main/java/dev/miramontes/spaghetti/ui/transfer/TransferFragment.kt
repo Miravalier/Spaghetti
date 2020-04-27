@@ -68,25 +68,33 @@ class TransferFragment : Fragment() {
                             Toast.makeText(activity, R.string.invalid_transfer_amount, Toast.LENGTH_LONG).show()
                         }
                         else {
+                            amountField.setText("")
                             serverConnection.createTransfer(
                                 userIds[fromSpinner.selectedItemPosition],
                                 userIds[toSpinner.selectedItemPosition],
                                 amount,
                                 Response.Listener { response ->
-                                    amountField.setText("")
-                                    if (response.opt("success") != null) {
-                                        Toast.makeText(
-                                            activity,
-                                            R.string.transfer_complete,
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                    }
-                                    else {
-                                        Toast.makeText(
-                                            activity,
-                                            R.string.transfer_failed,
-                                            Toast.LENGTH_LONG
-                                        ).show()
+                                    val successMessage: String = response.optString("success")
+                                    val errorMessage: String = response.optString("error")
+                                    when {
+                                        successMessage != "" ->
+                                            Toast.makeText(
+                                                activity,
+                                                successMessage,
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        errorMessage != "" ->
+                                            Toast.makeText(
+                                                activity,
+                                                errorMessage,
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        else ->
+                                            Toast.makeText(
+                                                activity,
+                                                R.string.unspecified_error,
+                                                Toast.LENGTH_LONG
+                                            ).show()
                                     }
                                 },
                                 Response.ErrorListener {

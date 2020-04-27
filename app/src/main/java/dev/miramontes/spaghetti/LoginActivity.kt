@@ -33,11 +33,6 @@ class LoginActivity : AppCompatActivity() {
 
         val googleSignInClient = GoogleSignIn.getClient(this, googleSignInOptions)
 
-        signInButton.setOnClickListener {
-            val signInIntent = googleSignInClient.signInIntent
-            startActivityForResult(signInIntent, resources.getInteger(R.integer.RC_GOOGLE_SIGN_IN))
-        }
-
         // Use previously signed in account if possible
         val account: GoogleSignInAccount? = GoogleSignIn.getLastSignedInAccount(this)
         if (account != null) {
@@ -48,7 +43,19 @@ class LoginActivity : AppCompatActivity() {
             },
             Response.ErrorListener {
                 Log.e("Spaghetti", "Failed to authenticate with cached credentials.")
+
+                signInButton.setOnClickListener {
+                    val signInIntent = googleSignInClient.signInIntent
+                    startActivityForResult(signInIntent, resources.getInteger(R.integer.RC_GOOGLE_SIGN_IN))
+                }
             })
+        }
+        else
+        {
+            signInButton.setOnClickListener {
+                val signInIntent = googleSignInClient.signInIntent
+                startActivityForResult(signInIntent, resources.getInteger(R.integer.RC_GOOGLE_SIGN_IN))
+            }
         }
     }
 
