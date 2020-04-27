@@ -25,6 +25,13 @@ CHECKING = 0
 SAVINGS = 1
 
 
+def last_friday(day):
+    friday = day - timedelta(days=day.weekday() - 4)
+    if friday > day:
+        friday -= timedelta(days=7)
+    return friday
+
+
 def log(*args, **kwargs):
     print(*args, **kwargs, file=sys.stderr)
 
@@ -155,11 +162,11 @@ class DenyRequest(Resource):
         request = args["request"]
         if request.source.owner != user and request.destination.owner != user:
             log("Request: {}, User: {}".format(request, user))
-            return {"error": "you can't deny a transfer that does not involve you"}
+            return {"error": "You can't deny a transfer that does not involve you."}
 
         try:
             request.deny()
-            return {"success": "request accepted"}
+            return {"success": "Request denied."}
         except Exception as e:
             return {"error": str(e)}
 
@@ -174,11 +181,11 @@ class AcceptRequest(Resource):
         request = args["request"]
         if request.source.owner != user:
             log("Request: {}, User: {}".format(request, user))
-            return {"error": "you can't approve a transfer from someone else's account"}
+            return {"error": "You can't approve a transfer from someone else's account."}
 
         try:
             request.accept()
-            return {"success": "request accepted"}
+            return {"success": "Request accepted."}
         except Exception as e:
             return {"error": str(e)}
 
@@ -196,17 +203,19 @@ class CreateTransfer(Resource):
         destination = args["destination"].checking
         amount = args["amount"]
 
-        if source in user.accounts:
+        if source == destination:
+            return {"error": "'To' and 'From' must be different."}
+        elif source in user.accounts:
             if source.balance > amount:
                 source.transfer_to(destination, amount)
-                return {"success": "transfer completed"}
+                return {"success": "Transfer completed."}
             else:
-                return {"error": "insufficient balance"}
+                return {"error": "Insufficient balance."}
         elif destination in user.accounts:
             Request.create(source, destination, amount)
-            return {"success": "transfer requested"}
+            return {"success": "Transfer requested."}
         else:
-            return {"error": "you cannot request a transfer that does not involve you"}
+            return {"error": "You can't request a transfer that does not involve you."}
 
 
 class UpdateUsername(Resource):
@@ -218,7 +227,7 @@ class UpdateUsername(Resource):
         user = args["user"]
         user.update_username(args["username"])
 
-        return {"success": "username updated"}
+        return {"success": "Username updated."}
 
 
 api.add_resource(AuthStatus, '/authstatus')
@@ -539,7 +548,7 @@ class User:
             """,
             (
                 account_uuid, name, type, balance, self.user_id,
-                datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                last_friday(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0))
             )
         )
         account = Account.lookup(account_id)
