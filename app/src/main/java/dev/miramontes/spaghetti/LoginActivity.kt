@@ -83,12 +83,23 @@ class LoginActivity : AppCompatActivity() {
         Toast.makeText(this, R.string.login_failed, Toast.LENGTH_LONG).show()
     }
 
+    private fun onServerDown() {
+        Toast.makeText(this, R.string.server_unreachable, Toast.LENGTH_LONG).show()
+    }
+
     private fun onLogin(account: GoogleSignInAccount) {
         val idToken = account.idToken
         if (idToken != null) {
             setIdToken(this, idToken)
             Log.d("Spaghetti", "Google Login Successful")
-            startActivity(Intent(this, MainActivity::class.java))
+            ServerConnection(this, idToken).status(
+                Response.Listener {
+                    startActivity(Intent(this, MainActivity::class.java))
+                },
+                Response.ErrorListener {
+                    onServerDown()
+                }
+            )
         }
         else {
             onError()

@@ -52,4 +52,5 @@
     <string name="request_cancel_success">Cancelled request.</string>
     <string name="request_cancel_fail">Failed to cancel request.</string>
     <string name="unspecified_error">An unknown error has occurred.</string>
+    <string name="server_unreachable">The server is unreachable.</string>
 </resources>
