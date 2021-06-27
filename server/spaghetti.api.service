@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 Restart=always
 User=root
-ExecStart=/usr/bin/env python3.7 /var/api/spaghetti.py
+ExecStart=/usr/bin/env python3.9 /var/api/spaghetti.py
 TimeoutStopSec=15
 
 [Install]

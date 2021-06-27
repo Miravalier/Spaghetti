@@ -1,0 +1,4 @@
+flask
+flask_restful
+google-auth
+psycopg2-binary
