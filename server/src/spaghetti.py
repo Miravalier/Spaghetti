@@ -2,6 +2,7 @@
 
 import uuid
 import sys
+import traceback
 from flask import Flask
 from flask_restful import reqparse, Resource, Api
 from datetime import datetime, timedelta
@@ -37,6 +38,8 @@ def log(*args, **kwargs):
 
 
 def elog(e, *args, **kwargs):
+    exc_info = sys.exc_info()
+    traceback.print_exception(*exc_info)
     log(*args, "{}: {}".format(str(type(e).__name__), str(e)), **kwargs)
 
 
@@ -129,7 +132,8 @@ class ListUsers(Resource):
         parser = AuthenticatedParser()
         args = parser.parse_args()
 
-        return {"users": psql.query("SELECT user_id, user_name FROM users")}
+        with PSQL("/var/spaghetti/db") as psql:
+            return {"users": psql.query("SELECT user_id, user_name FROM users")}
 
 
 class ListInboundRequests(Resource):
@@ -161,7 +165,6 @@ class DenyRequest(Resource):
         user = args["user"]
         request = args["request"]
         if request.source.owner != user and request.destination.owner != user:
-            log("Request: {}, User: {}".format(request, user))
             return {"error": "You can't deny a transfer that does not involve you."}
 
         try:
@@ -180,7 +183,6 @@ class AcceptRequest(Resource):
         user = args["user"]
         request = args["request"]
         if request.source.owner != user:
-            log("Request: {}, User: {}".format(request, user))
             return {"error": "You can't approve a transfer from someone else's account."}
 
         try:
@@ -246,9 +248,6 @@ api.add_resource(UpdateUsername, '/update-username')
 # CLASSES #
 ###########
 
-psql = PSQL("dbname=spaghetti")
-
-
 def add_transaction(date, source, destination, amount):
     if source is not None and destination is not None:
         transaction = (date, source.account_id, destination.account_id, amount)
@@ -263,10 +262,11 @@ def add_transaction(date, source, destination, amount):
     else:
         raise ValueError("Source and destination can't both be None")
 
-    psql.execute("""
-        INSERT INTO transactions (transaction_time, from_id, to_id, amount)
-        VALUES (%s, %s, %s, %s)
-    """, transaction)
+    with PSQL("/var/spaghetti/db") as psql:
+        psql.execute("""
+            INSERT INTO transactions (transaction_time, from_id, to_id, amount)
+            VALUES (?, ?, ?, ?)
+        """, transaction)
 
 
 class Request:
@@ -296,7 +296,8 @@ class Request:
             raise ValueError("Not enough funds to cover the transaction")
         # Delete request
         self.deleted = True
-        psql.execute("DELETE FROM requests WHERE request_id=%s", (self.request_id,))
+        with PSQL("/var/spaghetti/db") as psql:
+            psql.execute("DELETE FROM requests WHERE request_id=?", (self.request_id,))
         # Transfer funds
         self.source.transfer_to(self.destination, self.amount)
 
@@ -306,20 +307,22 @@ class Request:
             raise ValueError("Request no longer exists")
         # Delete request
         self.deleted = True
-        psql.execute("DELETE FROM requests WHERE request_id=%s", (self.request_id,))
+        with PSQL("/var/spaghetti/db") as psql:
+            psql.execute("DELETE FROM requests WHERE request_id=?", (self.request_id,))
 
     @classmethod
     def create(cls, source, destination, amount):
         parameters = (datetime.now(), source.account_id, destination.account_id, Decimal(amount))
         # Insert into database and get id
-        request_id = psql.execute_and_return(
-            """
-                INSERT INTO requests (creation_time, from_id, to_id, amount)
-                VALUES (%s, %s, %s, %s)
-                RETURNING request_id
-            """,
-            parameters
-        )
+        with PSQL("/var/spaghetti/db") as psql:
+            request_id = psql.execute_and_return(
+                """
+                    INSERT INTO requests (creation_time, from_id, to_id, amount)
+                    VALUES (?, ?, ?, ?)
+                    RETURNING request_id
+                """,
+                parameters
+            )
         # Create request
         request = cls(*parameters, request_id)
         # Cache and return request
@@ -336,9 +339,10 @@ class Request:
         # Query the database
         request_query = """
             SELECT creation_time, from_id, to_id, amount
-            FROM requests WHERE request_id=%s
+            FROM requests WHERE request_id=?
         """
-        response = psql.single_query(request_query, (request_id,))
+        with PSQL("/var/spaghetti/db") as psql:
+            response = psql.single_query(request_query, (request_id,))
         if not response:
             return None
 
@@ -360,10 +364,11 @@ class Account:
         self.name = name
         self.balance = balance
         self.update_time = update_time
-        self.transactions = psql.query("""
-            SELECT transaction_time, from_id, to_id, amount
-            FROM transactions WHERE from_id=%s OR to_id=%s
-        """, (account_id, account_id))
+        with PSQL("/var/spaghetti/db") as psql:
+            self.transactions = psql.query("""
+                SELECT transaction_time, from_id, to_id, amount
+                FROM transactions WHERE from_id=? OR to_id=?
+            """, (account_id, account_id))
 
     def __str__(self):
         return "Account(id={}, balance={})".format(self.account_id, self.balance)
@@ -376,10 +381,11 @@ class Account:
 
     @property
     def inbound_requests(self):
-        request_values = psql.query(
-            "SELECT from_id, to_id, amount, request_id FROM requests WHERE from_id=%s",
-            (self.account_id,)
-        )
+        with PSQL("/var/spaghetti/db") as psql:
+            request_values = psql.query(
+                "SELECT from_id, to_id, amount, request_id FROM requests WHERE from_id=?",
+                (self.account_id,)
+            )
         requests = []
         for from_id, to_id, amount, request_id in request_values:
             requests.append((
@@ -392,10 +398,11 @@ class Account:
 
     @property
     def outbound_requests(self):
-        request_values = psql.query(
-            "SELECT from_id, to_id, amount, request_id FROM requests WHERE to_id=%s",
-            (self.account_id,)
-        )
+        with PSQL("/var/spaghetti/db") as psql:
+            request_values = psql.query(
+                "SELECT from_id, to_id, amount, request_id FROM requests WHERE to_id=?",
+                (self.account_id,)
+            )
         requests = []
         for from_id, to_id, amount, request_id in request_values:
             requests.append((
@@ -434,9 +441,10 @@ class Account:
 
     def update_balance(self, amount):
         self.balance = Decimal(amount)
-        psql.execute("""
-            UPDATE accounts SET account_balance=%s WHERE account_id=%s
-        """, (amount, self.account_id))
+        with PSQL("/var/spaghetti/db") as psql:
+            psql.execute("""
+                UPDATE accounts SET account_balance=? WHERE account_id=?
+            """, (amount, self.account_id))
 
     def advance_time(self):
         seconds_advanced = (datetime.now() - self.update_time).total_seconds()
@@ -456,9 +464,10 @@ class Account:
             self.add_balance(self.balance * interest_rate)
             self.update_time += timedelta(days=days_advanced)
 
-        psql.execute("""
-            UPDATE accounts SET update_time=%s WHERE account_id=%s
-        """, (self.update_time, self.account_id))
+        with PSQL("/var/spaghetti/db") as psql:
+            psql.execute("""
+                UPDATE accounts SET update_time=? WHERE account_id=?
+            """, (self.update_time, self.account_id))
 
     @classmethod
     def lookup(cls, account_id):
@@ -469,10 +478,11 @@ class Account:
             return account
 
         # Query the database
-        response = psql.single_query("""
-            SELECT user_id, account_type, account_name, account_uuid, account_balance, update_time
-            FROM accounts WHERE account_id=%s
-        """, (account_id,))
+        with PSQL("/var/spaghetti/db") as psql:
+            response = psql.single_query("""
+                SELECT user_id, account_type, account_name, account_uuid, account_balance, update_time
+                FROM accounts WHERE account_id=?
+            """, (account_id,))
         if not response:
             return None
         user_id, account_type, name, account_uuid, balance, update_time = response
@@ -493,10 +503,11 @@ class User:
         self.google_id = google_id
         self.email = email
 
-        account_ids = psql.query("""
-            SELECT account_id, account_name
-            FROM accounts WHERE user_id=%s
-        """, (self.user_id,))
+        with PSQL("/var/spaghetti/db") as psql:
+            account_ids = psql.query("""
+                SELECT account_id, account_name
+                FROM accounts WHERE user_id=?
+            """, (self.user_id,))
 
         self.accounts = set()
         for account_id, name in account_ids:
@@ -512,7 +523,8 @@ class User:
 
     def update_username(username):
         self.username = username
-        psql.execute("UPDATE users SET user_name=%s WHERE user_id=%s", (username, self.user_id))
+        with PSQL("/var/spaghetti/db") as psql:
+            psql.execute("UPDATE users SET user_name=? WHERE user_id=?", (username, self.user_id))
 
     @property
     def inbound_requests(self):
@@ -537,20 +549,21 @@ class User:
 
     def create_account(self, name="Checking", type=CHECKING, balance=STARTING_BALANCE):
         account_uuid = str(uuid.uuid4())
-        account_id = psql.execute_and_return(
-            """
-                INSERT INTO accounts (
-                    account_uuid, account_name, account_type,
-                    account_balance, user_id, update_time
+        with PSQL("/var/spaghetti/db") as psql:
+            account_id = psql.execute_and_return(
+                """
+                    INSERT INTO accounts (
+                        account_uuid, account_name, account_type,
+                        account_balance, user_id, update_time
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    RETURNING account_id
+                """,
+                (
+                    account_uuid, name, type, balance, self.user_id,
+                    last_friday(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0))
                 )
-                VALUES (%s, %s, %s, %s, %s, %s)
-                RETURNING account_id
-            """,
-            (
-                account_uuid, name, type, balance, self.user_id,
-                last_friday(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0))
             )
-        )
         account = Account.lookup(account_id)
         self.accounts.add(account)
         return account
@@ -565,14 +578,15 @@ class User:
         # Build the query
         lookup_query = "SELECT user_name, user_id, google_id, email FROM users WHERE "
         if type(id) is int:
-            lookup_query += "user_id=%s"
+            lookup_query += "user_id=?"
         elif type(id) is str:
-            lookup_query += "google_id=%s"
+            lookup_query += "google_id=?"
         else:
             raise TypeError("Invalid user id lookup type '{}'".format(type(id)))
 
         # Query the database
-        response = psql.single_query(lookup_query, (id,))
+        with PSQL("/var/spaghetti/db") as psql:
+            response = psql.single_query(lookup_query, (id,))
         if not response:
             return None
         username, user_id, google_id, email = response
@@ -594,11 +608,12 @@ class User:
             return user
 
         # Insert a new user
-        user_id = psql.execute_and_return("""
-            INSERT INTO users (google_id, email, user_name)
-            VALUES (%s, %s, %s)
-            RETURNING user_id
-        """, (google_id, email, username))
+        with PSQL("/var/spaghetti/db") as psql:
+            user_id = psql.execute_and_return("""
+                INSERT INTO users (google_id, email, user_name)
+                VALUES (?, ?, ?)
+                RETURNING user_id
+            """, (google_id, email, username))
         user = cls(username, user_id, google_id, email)
         user.create_account(balance=STARTING_BALANCE)
 
@@ -609,4 +624,6 @@ class User:
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3033, debug=True)
+    #import waitress
+    #waitress.serve(app, host='0.0.0.0', port=80)
+    app.run(host="0.0.0.0", port=80, debug=True)

@@ -1,0 +1,10 @@
+version: '2'
+services:
+    api:
+        restart: always
+        container_name: spaghetti
+        ports:
+            - "9092:80"
+        volumes:
+            - "/var/spaghetti/:/var/spaghetti"
+        build: .

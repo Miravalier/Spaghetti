@@ -1,26 +1,40 @@
-import threading
-import psycopg2
+import re
+import sqlite3
 from contextlib import contextmanager
-from collections import deque
+from datetime import datetime
+from decimal import Decimal
+
+
+TIMESTAMP_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
+
+
+def convert_result(result):
+    if isinstance(result, str):
+        # Check if this is a timestamp
+        if TIMESTAMP_PATTERN.fullmatch(result):
+            return datetime.strptime(result, "%Y-%m-%d %H:%M:%S")
+        # Check if this is an int
+        try:
+            return int(result)
+        except:
+            pass
+    return result
+
+
+def convert_param(param):
+    if isinstance(param, datetime):
+        return param.strftime("%Y-%m-%d %H:%M:%S")
+    elif isinstance(param, (int, float, Decimal)):
+        return str(param)
+    return param
+
 
 class PSQL:
     def __init__(self, connection_string):
-        self.running = True
-        self.write_semaphore = threading.Semaphore(0)
-        self.write_lock = threading.Lock()
-        self.pending_writes = deque()
-        # Open connectons to DB
-        self.read_connection = psycopg2.connect(connection_string)
-        self.write_connection = psycopg2.connect(connection_string)
-        # Start worker thread
-        self.worker = threading.Thread(target=sql_write_worker, args=(self,), daemon=True)
-        self.worker.start()
+        self.connection = sqlite3.Connection(connection_string)
 
     def close(self):
-        self.running = False
-        self.read_connection.close()
-        self.write_connection.close()
-        self.worker.join()
+        self.connection.close()
 
     def __enter__(self, *args, **kwargs):
         return self
@@ -29,69 +43,65 @@ class PSQL:
         self.close()
 
     @contextmanager
-    def read_write_cursor(self):
-        cur = self.read_connection.cursor()
-        try:
-            yield cur
-        finally:
-            cur.close()
-            self.read_connection.commit()
-
-    @contextmanager
     def write_cursor(self):
-        cur = self.write_connection.cursor()
+        cur = self.connection.cursor()
         try:
             yield cur
         finally:
             cur.close()
-            self.write_connection.commit()
+            self.connection.commit()
 
     @contextmanager
     def read_cursor(self):
-        cur = self.read_connection.cursor()
+        cur = self.connection.cursor()
         try:
             yield cur
         finally:
             cur.close()
 
-    def execute_and_return(self, *args, **kwargs):
-        with self.read_write_cursor() as cur:
-            cur.execute(*args, **kwargs)
-            result = cur.fetchone()
+    def execute_and_return(self, sql, params=None, **kwargs):
+        if params:
+            params = tuple(convert_param(p) for p in params)
+        with self.write_cursor() as cur:
+            if params:
+                cur.execute(sql, params, **kwargs)
+            else:
+                cur.execute(sql, **kwargs)
+            result = [convert_result(r) for r in cur.fetchone()]
             if result and len(result) == 1:
                 return result[0]
             else:
                 return result
 
-    def execute(self, *args, **kwargs):
-        with self.write_lock:
-            self.pending_writes.append((args, kwargs))
-        self.write_semaphore.release()
+    def execute(self, sql, params=None, **kwargs):
+        if params:
+            params = tuple(convert_param(p) for p in params)
+        with self.write_cursor() as cur:
+            if params:
+                cur.execute(sql, params, **kwargs)
+            else:
+                cur.execute(sql, **kwargs)
 
-    def query(self, *args, **kwargs):
+    def query(self, sql, params=None, **kwargs):
+        if params:
+            params = tuple(convert_param(p) for p in params)
         with self.read_cursor() as cur:
-            cur.execute(*args, **kwargs)
-            return cur.fetchall()
+            if params:
+                cur.execute(sql, params, **kwargs)
+            else:
+                cur.execute(sql, **kwargs)
+            return [[convert_result(r) for r in line] for line in cur.fetchall()]
 
-    def single_query(self, *args, **kwargs):
+    def single_query(self, sql, params=None, **kwargs):
+        if params:
+            params = tuple(convert_param(p) for p in params)
         with self.read_cursor() as cur:
-            cur.execute(*args, **kwargs)
-            result = cur.fetchone()
+            if params:
+                cur.execute(sql, params, **kwargs)
+            else:
+                cur.execute(sql, **kwargs)
+            result = [convert_result(r) for r in cur.fetchone()]
             if result and len(result) == 1:
                 return result[0]
             else:
                 return result
-
-
-def sql_write_worker(psql):
-    while psql.running:
-        psql.write_semaphore.acquire(timeout=1)
-
-        args = None
-        with psql.write_lock:
-            if psql.pending_writes:
-                args, kwargs = psql.pending_writes.popleft()
-
-        if args:
-            with psql.write_cursor() as cur:
-                cur.execute(*args, **kwargs)
