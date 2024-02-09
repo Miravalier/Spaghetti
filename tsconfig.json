@@ -1,0 +1,8 @@
+{
+    "include": [
+        "frontend/src/**/*"
+    ],
+    "compilerOptions": {
+        "outDir": "build"
+    }
+}
