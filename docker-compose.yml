@@ -1,0 +1,15 @@
+version: '2'
+services:
+    api:
+        build: .
+        container_name: spaghetti_api
+        restart: unless-stopped
+        ports:
+            - "8080:80"
+        volumes:
+            - "/var/spaghetti/:/data"
+
+    db:
+        image: mongo
+        container_name: spaghetti_db
+        restart: unless-stopped
