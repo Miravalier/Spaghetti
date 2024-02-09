@@ -7,7 +7,8 @@ services:
         ports:
             - "8080:80"
         volumes:
-            - "/var/spaghetti/:/data"
+            - "./static:/static"
+            - "/var/spaghetti:/data"
 
     db:
         image: mongo
