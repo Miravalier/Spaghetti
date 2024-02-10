@@ -9,7 +9,7 @@ RUN tsc
 
 
 FROM python:3.12-alpine
-RUN pip install fastapi uvicorn
+RUN pip install fastapi uvicorn pymongo
 WORKDIR /app
 
 COPY frontend/static /static

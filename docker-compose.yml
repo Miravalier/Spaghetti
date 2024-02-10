@@ -1,4 +1,9 @@
-version: '2'
+version: "3.5"
+
+networks:
+    spaghetti:
+        external: false
+
 services:
     api:
         build: .
@@ -7,10 +12,18 @@ services:
         ports:
             - "${HTTP_PORT}:80"
         volumes:
-            - "/var/spaghetti:/data"
+            - "/var/spaghetti/api:/data"
         environment:
             - ADMIN_TOKEN=${ADMIN_TOKEN}
+        networks:
+            - spaghetti
     db:
         image: mongo
         container_name: spaghetti_db
         restart: unless-stopped
+        ports:
+            - 27017:27017
+        volumes:
+            - /var/spaghetti/db:/data/db
+        networks:
+            - spaghetti
