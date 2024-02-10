@@ -42,9 +42,7 @@ async def authorized_user(token: AuthorizationToken) -> User:
     if not compare_digest(expected_signature, given_signature):
         raise HTTPException(status_code=401, headers={"WWW-Authenticate": "Bearer"}, detail="unauthorized")
 
-    document: dict = database.users.find_one({"_id": ObjectId(auth_object.user_id)})
-    document["id"] = document.pop("_id").binary.hex()
-    return User.model_validate(document)
+    return User.from_mongo_document(database.users.find_one({"_id": ObjectId(auth_object.user_id)}))
 
 
 AuthorizedUser = Annotated[User, Depends(authorized_user)]

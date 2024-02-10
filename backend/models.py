@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import hashlib
 import secrets
@@ -18,6 +20,11 @@ class User(BaseModel):
         signature = base64.b64encode(hashlib.sha512((ADMIN_TOKEN + nonce + self.id).encode()).digest()).decode()
         json_string = AuthObject(user_id=self.id, nonce=nonce, signature=signature).model_dump_json()
         return base64.b64encode(json_string.encode()).decode()
+
+    @classmethod
+    def from_mongo_document(cls, document: dict) -> User:
+        document["id"] = document.pop("_id").binary.hex()
+        return User.model_validate(document)
 
 
 class AuthObject(BaseModel):
