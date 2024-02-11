@@ -16,6 +16,14 @@ transactions = db.transactions
 transactions.create_index({"source": 1, "date": 1})
 transactions.create_index({"destination": 1, "date": 1})
 
+friendships = db.friendships
+friendships.create_index({"source": 1, "destination": 1})
+friendships.create_index({"source": 1})
+friendships.create_index({"destination": 1})
+
+invite_codes = db.invite_codes
+invite_codes.create_index({"code": 1})
+
 
 def add_balance(user_id: str, amount: Decimal):
     result = users.update_one(

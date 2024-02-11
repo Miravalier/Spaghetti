@@ -6,6 +6,7 @@ import secrets
 from bson import Decimal128
 from datetime import datetime
 from decimal import Decimal
+from fastapi import HTTPException
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import BeforeValidator
 from typing import Annotated, Any, TypeVar, Type
@@ -27,11 +28,21 @@ T = TypeVar('T', bound="MongoModel")
 
 class MongoModel(BaseModel):
     @classmethod
-    def from_mongo_document(cls: Type[T], document: dict) -> T:
+    def from_mongo_document(cls: Type[T], document: dict | None) -> T:
+        if document is None:
+            raise HTTPException(status_code=400, detail=f"invalid {cls.__name__} id")
         return cls.model_validate({
             ("id" if k == "_id" else k): (v.binary.hex() if k == "_id" else v)
             for k, v in document.items()
         })
+
+
+class InviteCode(MongoModel):
+    id: str
+    code: str
+    creator: str
+    uses: int = 1
+    date: datetime = Field(default_factory=datetime.now)
 
 
 class User(MongoModel):
