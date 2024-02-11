@@ -1,20 +1,61 @@
 #!/usr/bin/env python3
-from typing import Dict, Iterable, List
 import cmd2
 import sys
 import requests
 
 
-empty_parser = cmd2.Cmd2ArgumentParser()
+status_parser = cmd2.Cmd2ArgumentParser()
+invites_parser = cmd2.Cmd2ArgumentParser()
+create_invite_parser = cmd2.Cmd2ArgumentParser()
+list_friends_parser = cmd2.Cmd2ArgumentParser()
+list_transactions_parser = cmd2.Cmd2ArgumentParser()
 
 login_parser = cmd2.Cmd2ArgumentParser()
 login_parser.add_argument("username", help="Spaghetti account username")
 login_parser.add_argument("password", help="Spaghetti account password")
 
+register_parser = cmd2.Cmd2ArgumentParser()
+register_parser.add_argument("username", help="Spaghetti account username")
+register_parser.add_argument("password", help="Spaghetti account password")
+register_parser.add_argument("invite_code", help="Invite code")
+
+check_invite_parser = cmd2.Cmd2ArgumentParser()
+check_invite_parser.add_argument("invite_code", help="Invite code to check")
+
+delete_invite_parser = cmd2.Cmd2ArgumentParser()
+delete_invite_parser.add_argument("invite_code", help="Invite code to delete")
+
+add_friend_parser = cmd2.Cmd2ArgumentParser()
+add_friend_parser.add_argument("name", help="Username to add as a friend")
+
+delete_friend_parser = cmd2.Cmd2ArgumentParser()
+delete_friend_parser.add_argument("name", help="Username to remove as a friend")
+
+transfer_parser = cmd2.Cmd2ArgumentParser()
+transfer_parser.add_argument("user", help="User to transfer to")
+transfer_parser.add_argument("amount", help="Amount to transfer")
+transfer_parser.add_argument("comment", nargs="?", default="", help="Transaction comment")
+
+lookup_user_parser = cmd2.Cmd2ArgumentParser()
+lookup_user_parser.add_argument("name", help="Username to look up")
+
 
 class SpaghettiCLI(cmd2.Cmd):
     base_url: str = "http://127.0.0.1:8080"
+    id: str = None
     token: str = None
+
+    @cmd2.with_argparser(status_parser)
+    def do_status(self, args):
+        """
+        Get account status
+        """
+        response = requests.get(
+            f"{self.base_url}/api/status",
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        body = response.json()
+        print(response.status_code, body)
 
     @cmd2.with_argparser(login_parser)
     def do_login(self, args):
@@ -33,14 +74,147 @@ class SpaghettiCLI(cmd2.Cmd):
 
         if response.status_code == 200:
             self.token = body["token"]
+            self.id = body["user"]["id"]
 
-    @cmd2.with_argparser(empty_parser)
-    def do_status(self, args):
+    @cmd2.with_argparser(register_parser)
+    def do_register(self, args):
         """
-        Get status
+        Register a new spaghetti account
+        """
+        response = requests.post(
+            f"{self.base_url}/api/register",
+            json={
+                "username": args.username,
+                "password": args.password,
+                "invite_code": args.invite_code,
+            }
+        )
+        body = response.json()
+        print(response.status_code, body)
+
+        if response.status_code == 200:
+            self.token = body["token"]
+
+    @cmd2.with_argparser(invites_parser)
+    def do_invites(self, args):
+        """
+        List invite codes
         """
         response = requests.get(
-            f"{self.base_url}/api/status",
+            f"{self.base_url}/api/invites",
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        body = response.json()
+        print(response.status_code, body)
+
+    @cmd2.with_argparser(check_invite_parser)
+    def do_check_invite(self, args):
+        """
+        Check an invite code
+        """
+        response = requests.get(
+            f"{self.base_url}/api/invite?code={args.invite_code}",
+        )
+        body = response.json()
+        print(response.status_code, body)
+
+    @cmd2.with_argparser(create_invite_parser)
+    def do_invite(self, args):
+        """
+        Create invite code
+        """
+        response = requests.post(
+            f"{self.base_url}/api/invite",
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        body = response.json()
+        print(response.status_code, body)
+
+    @cmd2.with_argparser(delete_invite_parser)
+    def do_delete_invite(self, args):
+        """
+        Delete invite code
+        """
+        response = requests.delete(
+            f"{self.base_url}/api/invite?code={args.invite_code}",
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        body = response.json()
+        print(response.status_code, body)
+
+    @cmd2.with_argparser(add_friend_parser)
+    def do_add_friend(self, args):
+        """
+        Delete invite code
+        """
+        response = requests.post(
+            f"{self.base_url}/api/friend?name={args.name}",
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        body = response.json()
+        print(response.status_code, body)
+
+    @cmd2.with_argparser(list_friends_parser)
+    def do_list_friends(self, args):
+        """
+        Get account status
+        """
+        response = requests.get(
+            f"{self.base_url}/api/friends",
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        body = response.json()
+        print(response.status_code, body)
+
+    @cmd2.with_argparser(delete_friend_parser)
+    def do_remove_friend(self, args):
+        """
+        Remove friend
+        """
+        response = requests.delete(
+            f"{self.base_url}/api/friend?name={args.name}",
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        body = response.json()
+        print(response.status_code, body)
+
+    @cmd2.with_argparser(transfer_parser)
+    def do_transfer(self, args):
+        """
+        Transfer spaghetti to another user
+        """
+        response = requests.post(
+            f"{self.base_url}/api/transfer",
+            headers={"Authorization": f"Bearer {self.token}"},
+            json={
+                "source": self.id,
+                "destination": args.user,
+                "amount": args.amount,
+                "comment": args.comment,
+            }
+        )
+        body = response.json()
+        print(response.status_code, body)
+
+    @cmd2.with_argparser(lookup_user_parser)
+    def do_lookup_user(self, args):
+        """
+        Look up a user by name
+        """
+        response = requests.get(
+            f"{self.base_url}/api/user?name={args.name}",
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+        body = response.json()
+        print(response.status_code, body)
+
+    @cmd2.with_argparser(list_transactions_parser)
+    def do_list_transactions(self, args):
+        """
+        List transactions
+        """
+        response = requests.get(
+            f"{self.base_url}/api/transactions",
             headers={"Authorization": f"Bearer {self.token}"},
         )
         body = response.json()

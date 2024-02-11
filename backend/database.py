@@ -2,8 +2,10 @@ import pymongo
 from bson import Decimal128, ObjectId
 from decimal import Decimal
 from fastapi import HTTPException
+from pymongo.errors import DuplicateKeyError
 
-from models import Transaction
+from models import User, Transaction
+from security import hash_password
 
 
 client = pymongo.MongoClient("mongodb://spaghetti_db:27017")
@@ -23,6 +25,18 @@ friendships.create_index({"destination": 1})
 
 invite_codes = db.invite_codes
 invite_codes.create_index({"code": 1})
+
+
+def create_user(name: str, password: str, admin: bool = False, balance: Decimal = Decimal("25")) -> User:
+    user = User(id="", name=name, hashed_password=hash_password(password), admin=admin, balance=balance)
+    new_user_document = user.model_dump(exclude={"id"})
+    new_user_document["balance"] = Decimal128(new_user_document["balance"])
+    try:
+        result = users.insert_one(new_user_document)
+    except DuplicateKeyError:
+        raise HTTPException(status_code=400, detail="username taken")
+    user.id = result.inserted_id.binary.hex()
+    return user
 
 
 def add_balance(user_id: str, amount: Decimal):

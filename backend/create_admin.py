@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 import argparse
 import secrets
-from pymongo import ReturnDocument
+from fastapi import HTTPException
 
 import database
-from models import User
-from security import hash_password
 
 
 def main():
@@ -18,15 +16,13 @@ def main():
         args.password = secrets.token_urlsafe(16)
         print("[*] Password Generated:", args.password)
 
-    user = User(id="", name=args.username, hashed_password=hash_password(args.password), admin=True)
-    document = database.users.find_one_and_update(
-        {"name": args.username},
-        {"$set": user.model_dump(exclude={"id"})},
-        upsert=True,
-        return_document=ReturnDocument.AFTER
-    )
-    user.id = document["_id"].binary.hex()
-    print("[*] User Access Token:", user.token)
+    try:
+        user = database.create_user(args.username, args.password, admin=True)
+        print("[*] User Access Token:", user.token)
+    except HTTPException:
+        print("[!] User already exists!")
+
+
 
 
 if __name__ == '__main__':

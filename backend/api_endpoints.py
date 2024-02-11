@@ -4,12 +4,11 @@ from datetime import date, datetime
 from decimal import Decimal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from pymongo import ReturnDocument
 
 import database
-from dependencies import AuthorizedUser
+from dependencies import AuthorizedUser, AdminUser
 from models import User, InviteCode, Transaction
-from security import check_password, hash_password
+from security import check_password
 
 
 router = APIRouter()
@@ -35,7 +34,11 @@ async def post_login(request: LoginRequest):
     if not check_password(request.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="invalid username or password")
 
-    return {"status": "success", "token": user.token}
+    return {
+        "status": "success",
+        "user": user.model_dump(exclude={"hashed_password"}),
+        "token": user.token,
+    }
 
 
 class RegisterRequest(BaseModel):
@@ -49,20 +52,13 @@ async def post_register(request: RegisterRequest):
     document = database.invite_codes.find_one({"code": request.invite_code})
     if document is None:
         raise HTTPException(status_code=401, detail="invalid invite code")
-    code = InviteCode.from_mongo_document(document)
-    if code.uses == 1:
+    invite = InviteCode.from_mongo_document(document)
+    if invite.uses == 1:
         database.invite_codes.delete_one({"code": request.invite_code})
-    elif code.uses != -1:
+    elif invite.uses != -1:
         database.invite_codes.update_one({"code": request.invite_code}, {"$inc": {"uses": -1}})
 
-    user = User(id="", name=request.username, hashed_password=hash_password(request.password), balance=Decimal("25"))
-    document = database.users.find_one_and_update(
-        {"name": request.username},
-        {"$set": user.model_dump(exclude={"id"})},
-        upsert=True,
-        return_document=ReturnDocument.AFTER
-    )
-    user.id = document["_id"].binary.hex()
+    user = database.create_user(request.username, request.password)
 
     return {
         "status": "success",
@@ -95,7 +91,7 @@ async def check_invite_code(code: str):
 
 
 @router.post("/invite")
-async def create_invite_code(user: AuthorizedUser, uses: int = 1):
+async def create_invite_code(user: AdminUser, uses: int = 1):
     generated_code = secrets.token_urlsafe(32)
     invite = InviteCode(id="", code=generated_code, creator=user.id, uses=uses)
     database.invite_codes.insert_one(invite.model_dump(exclude={"id"}))
@@ -185,11 +181,18 @@ async def post_transfer(user: AuthorizedUser, request: TransferRequest):
 
 
 @router.get("/user")
-async def get_user_info(user: AuthorizedUser, user_id: str = None):
-    if user_id is None:
-        queried_user = user
+async def get_user_info(user: AuthorizedUser, id: str = None, name: str = None):
+    if id is not None and name is not None:
+        raise HTTPException(status_code=400, detail="use either id or name")
+    elif id is not None:
+        queried_user = User.from_mongo_document(database.users.find_one({"_id": ObjectId(id)}))
+    elif name is not None:
+        document = database.users.find_one({"name": name})
+        if document is None:
+            raise HTTPException(status_code=400, detail="invalid username")
+        queried_user = User.from_mongo_document(document)
     else:
-        queried_user = User.from_mongo_document(database.users.find_one({"_id": ObjectId(user_id)}))
+        queried_user = user
     return {"status": "success", "user": queried_user.model_dump(exclude={"hashed_password"})}
 
 
