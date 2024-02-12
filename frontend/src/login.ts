@@ -1,14 +1,17 @@
 import { apiRequest } from "./requests.js";
 import { session } from "./session.js";
 
-window.addEventListener("load", () => {
+window.addEventListener("load", async () => {
     // Try to grab the token from storage
     session.token = localStorage.getItem("token");
     if (session.token != null) {
         // Try to make a status request with this token
-        apiRequest("GET", "/status");
-        window.location.href = "/";
-        return;
+        try {
+            await apiRequest("GET", "/status");
+            window.location.href = "/";
+            return;
+        }
+        catch (error) { }
     }
 
     document.getElementById("login-button").addEventListener('click', async () => {
