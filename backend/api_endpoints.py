@@ -90,10 +90,14 @@ async def check_invite_code(code: str):
     return {"status": "success"}
 
 
+class CreateInviteRequest(BaseModel):
+    uses: int = 1
+
+
 @router.post("/invite")
-async def create_invite_code(user: AdminUser, uses: int = 1):
+async def create_invite_code(user: AdminUser, request: CreateInviteRequest):
     generated_code = secrets.token_urlsafe(32)
-    invite = InviteCode(id="", code=generated_code, creator=user.id, uses=uses)
+    invite = InviteCode(id="", code=generated_code, creator=user.id, uses=request.uses)
     database.invite_codes.insert_one(invite.model_dump(exclude={"id"}))
     return {"status": "success", "code": generated_code}
 
@@ -112,9 +116,13 @@ async def delete_invite_code(user: AuthorizedUser, code: str):
     return {"status": "success"}
 
 
+class AddFriendRequest(BaseModel):
+    name: str
+
+
 @router.post("/friend")
-async def add_friend(user: AuthorizedUser, name: str):
-    friend = User.from_mongo_document(database.users.find_one({"name": name}))
+async def add_friend(user: AuthorizedUser, request: AddFriendRequest):
+    friend = User.from_mongo_document(database.users.find_one({"name": request.name}))
     if friend.id == user.id:
         raise HTTPException(status_code=400, detail="cannot friend self")
 

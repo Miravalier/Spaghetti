@@ -3,6 +3,7 @@
         "frontend/src/**/*"
     ],
     "compilerOptions": {
-        "outDir": "build"
+        "outDir": "build",
+        "target": "ES2020",
     }
 }

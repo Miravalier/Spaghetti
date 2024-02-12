@@ -1,0 +1,43 @@
+body {
+    background-color: var(--sp-blue);
+}
+
+.watermark {
+    opacity: 50%;
+}
+
+.login {
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.login .label {
+    width: 80px;
+    text-align: right;
+}
+
+.login img {
+    height: 25%;
+    width: 25%;
+}
+
+.login input {
+    margin: 2px 6px;
+}
+
+.title {
+    font-size: xx-large;
+}
+
+.row {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.label {
+    margin: 2px 6px;
+}

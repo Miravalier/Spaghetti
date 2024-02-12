@@ -148,8 +148,9 @@ class SpaghettiCLI(cmd2.Cmd):
         Delete invite code
         """
         response = requests.post(
-            f"{self.base_url}/api/friend?name={args.name}",
+            f"{self.base_url}/api/friend",
             headers={"Authorization": f"Bearer {self.token}"},
+            json={"name": args.name},
         )
         body = response.json()
         print(response.status_code, body)
