@@ -1,4 +1,28 @@
-import { session } from "./session.js";
+class Session {
+    token: string;
+
+    constructor() {
+        this.token = null;
+    }
+
+    async load() {
+        // Try to grab the token from storage
+        this.token = localStorage.getItem("token");
+        if (this.token == null) {
+            window.location.href = "/login";
+        }
+
+        // Try to make a status request with this token
+        try {
+            await apiRequest("GET", "/status");
+        } catch (error) {
+            window.location.href = "/login";
+        }
+    }
+}
+
+
+export const session = new Session();
 
 
 export async function apiRequest(method: string, endpoint: string, data: any = null): Promise<any> {

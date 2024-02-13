@@ -1,10 +1,10 @@
 import { apiRequest } from "./requests.js";
-import { session } from "./session.js";
+
 
 window.addEventListener("load", async () => {
     // Try to grab the token from storage
-    session.token = localStorage.getItem("token");
-    if (session.token != null) {
+    let token = localStorage.getItem("token");
+    if (token != null) {
         // Try to make a status request with this token
         try {
             await apiRequest("GET", "/status");
@@ -22,7 +22,6 @@ window.addEventListener("load", async () => {
             { username: usernameElement.value, password: passwordElement.value }
         );
         if (response.status == "success") {
-            session.token = response.token;
             localStorage.setItem("token", response.token);
             window.location.href = "/";
         }

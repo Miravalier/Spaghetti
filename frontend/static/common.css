@@ -22,16 +22,16 @@
 
 html,
 body {
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
 body {
     background-color: var(--sp-dark-grey);
+    flex-flow: column nowrap;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: stretch;
+    align-items: stretch;
+
 }
 
 button {
@@ -41,4 +41,17 @@ button {
 
 input {
     color: var(--sp-dark-grey);
+}
+
+#pageLinks {
+    padding: 4px;
+}
+
+#pageLinks a {
+    margin: 4px;
+    color: var(--sp-light-grey);
+}
+
+#pageLinks a.selected {
+    color: var(--sp-light-blue);
 }
