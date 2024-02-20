@@ -1,21 +1,16 @@
 import { apiRequest, session } from "./requests.js";
-import { Lock } from "./utils.js";
-import { User } from "./models.js";
-
-
-const renderLock = new Lock();
+import { User, Transaction } from "./models.js";
+import { ButtonDialog } from "./dialog.js";
 
 
 window.addEventListener("load", async () => {
     await session.load();
-    await initialRender();
-    await renderLock.acquireAndRun(renderUpdate);
-    window.addEventListener("resize", () => { renderLock.acquireAndRun(renderUpdate); });
+    await render();
 });
 
 
-async function initialRender() {
-    console.log("[*] Rendering app; initial render");
+async function render() {
+    console.log("[*] Rendering app");
 
     const pagesDiv = document.body.appendChild(document.createElement("div"));
     pagesDiv.id = "pageLinks";
@@ -28,17 +23,24 @@ async function initialRender() {
     const balanceDiv = document.body.appendChild(document.createElement("div"));
     balanceDiv.id = "balanceSection";
     balanceDiv.innerHTML = `
-        <div class="balance">Spaghetti: 42</div>
+        <div class="balance"></div>
         <div class="buttons">
             <button type="button" id="send">Send</button>
-            <button type="button" id="request">Request</button>
+            <!-- <button type="button" id="request">Request</button> -->
         </div>
     `;
+
+    const sendButton = balanceDiv.querySelector<HTMLButtonElement>("#send");
+    sendButton.addEventListener("click", async () => {
+        const buttonPressed = await new ButtonDialog("Lorem Ipsum", ["Ok"]).render();
+        console.log("Button Pressed:", buttonPressed);
+    });
 
     const transactionLog = document.body.appendChild(document.createElement("div"));
     transactionLog.id = "transactionLog";
 
     loadBalance();
+    loadTransactions();
 }
 
 
@@ -48,21 +50,78 @@ async function loadBalance() {
         user: User;
     } = await apiRequest("GET", "/status");
 
-    const balance = document.querySelector("#balanceSection .balance") as HTMLDivElement;
-    balance.innerText = `Spaghetti: ${response.user.balance.toFixed(2)}`;
+    const balanceElement = document.querySelector("#balanceSection .balance") as HTMLDivElement;
+    balanceElement.innerText = `Spaghetti: ${Number(response.user.balance).toFixed(2)}`;
 }
 
 
-async function renderUpdate() {
-    console.log("[*] Rendering app; update");
+async function loadTransactions() {
+    const response: {
+        status: string;
+        transactions: Transaction[];
+    } = await apiRequest("GET", "/transactions");
 
-    // Figure out if we're in landscape or portrait
-    console.log("[*] Width:", window.innerWidth);
-    console.log("[*] Height:", window.innerHeight);
-    if (window.innerWidth > window.innerHeight) {
-        console.log("[*] Landscape Mode");
+    const transactionLogElement = document.querySelector("#transactionLog") as HTMLDivElement;
+    const headerElement = transactionLogElement.appendChild(document.createElement("div"));
+    headerElement.className = "header row";
+    headerElement.innerHTML = `
+        <div class="account field">Account</div>
+        <div class="comment field">Comment</div>
+        <div class="amount field">Amount</div>
+        <div class="date field">Date</div>
+    `;
+    let highlight = true;
+    for (const transaction of response.transactions) {
+        let accountName: string;
+        let amount: string;
+        let direction: string;
+
+        // Outbound
+        if (transaction.source == session.id) {
+            accountName = await getAccountName(transaction.destination);
+            amount = "-" + Number(transaction.amount).toFixed(2);
+            direction = "outbound";
+        }
+        // Inbound
+        else {
+            accountName = await getAccountName(transaction.source);
+            amount = "+" + Number(transaction.amount).toFixed(2);
+            direction = "inbound";
+        }
+
+        const transactionElement = transactionLogElement.appendChild(document.createElement("div"));
+        if (highlight) {
+            transactionElement.className = "transaction row highlight";
+        }
+        else {
+            transactionElement.className = "transaction row";
+        }
+        transactionElement.dataset.id = transaction.id;
+        transactionElement.innerHTML = `
+            <div class="account field">${accountName}</div>
+            <div class="comment field">${transaction.comment}</div>
+            <div class="amount field ${direction}">${amount}</div>
+            <div class="date field">${transaction.date.split("T")[0]}</div>
+        `;
+        highlight = !highlight;
     }
-    else {
-        console.log("[*] Portrait Mode");
+}
+
+
+const accountNameCache: { [id: string]: string } = {};
+
+
+async function getAccountName(id: string): Promise<string> {
+    if (id == "system") {
+        return "System";
     }
+    if (accountNameCache[id] !== undefined) {
+        return accountNameCache[id];
+    }
+    const response: {
+        status: string;
+        user: User;
+    } = await apiRequest("GET", "/user", { id });
+    accountNameCache[id] = response.user.name;
+    return response.user.name;
 }

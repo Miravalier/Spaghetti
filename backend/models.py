@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import secrets
-from bson import Decimal128
+from bson import Decimal128, ObjectId
 from datetime import datetime
 from decimal import Decimal
 from fastapi import HTTPException
@@ -20,25 +20,30 @@ def convert_decimal128_to_decimal(v: Any) -> Any:
     return v
 
 
+def convert_mongo_id_to_str(v: Any) -> Any:
+    if isinstance(v, ObjectId):
+        return v.binary.hex()
+    return v
+
+
 FlexibleDecimal = Annotated[Decimal, BeforeValidator(convert_decimal128_to_decimal)]
+MongoId = Annotated[str, Field(validation_alias="_id"), BeforeValidator(convert_mongo_id_to_str)]
 
 
 T = TypeVar('T', bound="MongoModel")
 
 
 class MongoModel(BaseModel):
+    id: MongoId
+
     @classmethod
     def from_mongo_document(cls: Type[T], document: dict | None) -> T:
         if document is None:
             raise HTTPException(status_code=400, detail=f"invalid {cls.__name__} id")
-        return cls.model_validate({
-            ("id" if k == "_id" else k): (v.binary.hex() if k == "_id" else v)
-            for k, v in document.items()
-        })
+        return cls.model_validate(document)
 
 
 class InviteCode(MongoModel):
-    id: str
     code: str
     creator: str
     uses: int = 1
@@ -46,7 +51,6 @@ class InviteCode(MongoModel):
 
 
 class User(MongoModel):
-    id: str
     name: str
     hashed_password: bytes
     admin: bool = False
@@ -61,7 +65,6 @@ class User(MongoModel):
 
 
 class Transaction(MongoModel):
-    id: str
     source: str
     destination: str
     amount: FlexibleDecimal

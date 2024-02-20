@@ -1,8 +1,13 @@
+import { User } from "./models.js";
+
+
 class Session {
     token: string;
+    id: string;
 
     constructor() {
         this.token = null;
+        this.id = null;
     }
 
     async load() {
@@ -14,7 +19,11 @@ class Session {
 
         // Try to make a status request with this token
         try {
-            await apiRequest("GET", "/status");
+            const response: {
+                status: string;
+                user: User;
+            } = await apiRequest("GET", "/status");
+            this.id = response.user.id;
         } catch (error) {
             window.location.href = "/login";
         }

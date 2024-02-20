@@ -1,20 +1,14 @@
 import { apiRequest, session } from "./requests.js";
-import { Lock } from "./utils.js";
-
-
-const renderLock = new Lock();
 
 
 window.addEventListener("load", async () => {
     await session.load();
-    await initialRender();
-    await renderLock.acquireAndRun(renderUpdate);
-    window.addEventListener("resize", () => { renderLock.acquireAndRun(renderUpdate); });
+    await render();
 });
 
 
-async function initialRender() {
-    console.log("[*] Rendering app; initial render");
+async function render() {
+    console.log("[*] Rendering app");
 
     const pagesDiv = document.body.appendChild(document.createElement("div"));
     pagesDiv.id = "pageLinks";
@@ -23,19 +17,4 @@ async function initialRender() {
         <a href="/friends" class="selected">Friends</a>
         <a href="/settings">Settings</a>
     `;
-}
-
-
-async function renderUpdate() {
-    console.log("[*] Rendering app; update");
-
-    // Figure out if we're in landscape or portrait
-    console.log("[*] Width:", window.innerWidth);
-    console.log("[*] Height:", window.innerHeight);
-    if (window.innerWidth > window.innerHeight) {
-        console.log("[*] Landscape Mode");
-    }
-    else {
-        console.log("[*] Portrait Mode");
-    }
 }

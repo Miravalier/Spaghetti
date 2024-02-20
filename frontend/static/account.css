@@ -1,1 +1,54 @@
+#transactionLog {
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+    margin: 4px;
+    padding: 4px;
+}
 
+#transactionLog .header {
+    font-weight: bold;
+}
+
+#transactionLog .row {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr 1fr;
+    width: 100%;
+}
+
+#transactionLog .row .field {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#transactionLog .transaction.highlight {
+    background: #ffffff18;
+    border-radius: 2px;
+}
+
+#transactionLog .transaction .amount {
+    text-shadow: 0px 0px white;
+}
+
+#transactionLog .transaction .amount.inbound {
+    color: var(--sp-green);
+}
+
+#transactionLog .transaction .amount.outbound {
+    color: var(--sp-red);
+}
+
+#balanceSection {
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+    margin: 12px;
+}
+
+#balanceSection .balance,
+#balanceSection button {
+    margin: 4px;
+}
