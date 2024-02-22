@@ -1,4 +1,4 @@
-import { apiRequest, session } from "./requests.js";
+import { apiRequest, session, getUserByName } from "./requests.js";
 import { User, Transaction } from "./models.js";
 import { ButtonDialog } from "./dialog.js";
 
@@ -32,8 +32,24 @@ async function render() {
 
     const sendButton = balanceDiv.querySelector<HTMLButtonElement>("#send");
     sendButton.addEventListener("click", async () => {
-        const buttonPressed = await new ButtonDialog("Lorem Ipsum", ["Ok"]).render();
-        console.log("Button Pressed:", buttonPressed);
+        const dialogResults = await new ButtonDialog(`
+            <div class="field">
+                <div class="label">User</div>
+                <input name="username"></input>
+            </div>
+            <div class="field">
+                <div class="label">Amount</div>
+                <input name="amount" type="number" step="0.01" min="0"></input>
+            </div>
+        `, ["Send", "Cancel"]).render();
+
+        if (dialogResults.button != "Send") {
+            return;
+        }
+
+        console.log("Button Pressed:", dialogResults);
+        const destination = await getUserByName(dialogResults.data.username);
+        console.log(destination, dialogResults.data.amount);
     });
 
     const transactionLog = document.body.appendChild(document.createElement("div"));

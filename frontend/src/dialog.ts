@@ -32,8 +32,14 @@ export class Dialog {
 }
 
 
+export type ButtonDialogResults = {
+    button: string;
+    data: any;
+};
+
+
 export class ButtonDialog extends Dialog {
-    future: Future<string>;
+    future: Future<ButtonDialogResults>;
 
     constructor(contents: string, buttons: string[]) {
         let buttonContents = "";
@@ -48,16 +54,33 @@ export class ButtonDialog extends Dialog {
             </div>
         `);
 
-        this.future = new Future<string>();
+        this.future = new Future<ButtonDialogResults>();
+        const results: ButtonDialogResults = { button: "", data: {} };
 
         this.container.addEventListener("click", (ev) => {
             ev.stopPropagation();
             this.close();
         });
 
+        for (const input of this.container.querySelectorAll<HTMLInputElement>("input")) {
+            if (!input.name) {
+                continue;
+            }
+            const updateResultData = () => {
+                if (input.type == "number") {
+                    results.data[input.name] = Number(input.value);
+                } else {
+                    results.data[input.name] = input.value;
+                }
+            };
+            updateResultData();
+            input.addEventListener("change", updateResultData);
+        }
+
         for (const button of this.container.querySelectorAll<HTMLButtonElement>(".buttons button")) {
             button.addEventListener("click", () => {
-                this.future.resolve(button.dataset.id);
+                results.button = button.dataset.id;
+                this.future.resolve(results);
                 this.close();
             });
         }
@@ -68,7 +91,7 @@ export class ButtonDialog extends Dialog {
         super.close();
     }
 
-    then(onfulfilled?: (value: string) => string | PromiseLike<string>,
+    then(onfulfilled?: (value: ButtonDialogResults) => ButtonDialogResults | PromiseLike<ButtonDialogResults>,
         onrejected?: (reason: any) => PromiseLike<never>) {
         return this.future.then(onfulfilled, onrejected);
     }

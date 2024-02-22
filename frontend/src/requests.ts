@@ -69,3 +69,21 @@ export async function apiRequest(method: string, endpoint: string, data: any = n
     }
     return await response.json();
 }
+
+
+export async function getUserById(id: string): Promise<User> {
+    const response: {
+        status: string;
+        user: User;
+    } = await apiRequest("GET", "/user", { id });
+    return response.user;
+}
+
+
+export async function getUserByName(name: string): Promise<User> {
+    const response: {
+        status: string;
+        user: User;
+    } = await apiRequest("GET", "/user", { name });
+    return response.user;
+}
