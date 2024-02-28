@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 import database
+from cache import lookup_user_name
 from dependencies import AuthorizedUser, AdminUser
 from models import User, InviteCode, Transaction
 from security import check_password
@@ -138,11 +139,15 @@ async def add_friend(user: AuthorizedUser, request: AddFriendRequest):
 async def list_friends(user: AuthorizedUser):
     outbound = []
     for document in database.friendships.find({"source": user.id}):
-        outbound.append(document["destination"])
+        outbound.append({
+            document["destination"]: lookup_user_name(document["destination"]),
+        })
 
     inbound = []
     for document in database.friendships.find({"destination": user.id}):
-        inbound.append(document["source"])
+        inbound.append({
+            document["source"]: lookup_user_name(document["source"]),
+        })
 
     return {"status": "success", "outbound": outbound, "inbound": inbound}
 
@@ -245,4 +250,19 @@ async def get_transactions(user: AuthorizedUser, months_ago: int = 0):
         transactions.append(Transaction.from_mongo_document(document))
 
     transactions.sort(key=lambda transaction: transaction.date)
-    return {"status": "success", "transactions": transactions}
+    return {
+        "status": "success",
+        "transactions": [
+            {
+                "id": transaction,
+                "date": transaction.date,
+                "amount": transaction.amount,
+                "comment": transaction.comment,
+                "destination": transaction.destination,
+                "destinationName": lookup_user_name(transaction.destination),
+                "source": transaction.source,
+                "sourceName": lookup_user_name(transaction.source),
+            }
+            for transaction in transactions
+        ]
+    }

@@ -9,8 +9,20 @@ export type User = {
 export type Transaction = {
     id: string;
     source: string;
+    sourceName: string;
     destination: string;
+    destinationName: string;
     amount: string;
     date: string;
     comment: string;
+};
+
+
+export type FriendshipType = "completed" | "inbound" | "outbound";
+
+
+export type Friendship = {
+    type: FriendshipType;
+    id: string;
+    name: string;
 };

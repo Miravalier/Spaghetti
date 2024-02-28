@@ -1,4 +1,5 @@
 import { apiRequest, session } from "./requests.js";
+import * as header from "./header.js";
 
 
 window.addEventListener("load", async () => {
@@ -10,11 +11,17 @@ window.addEventListener("load", async () => {
 async function render() {
     console.log("[*] Rendering app");
 
-    const pagesDiv = document.body.appendChild(document.createElement("div"));
-    pagesDiv.id = "pageLinks";
-    pagesDiv.innerHTML = `
-        <a href="/account">Account</a>
-        <a href="/friends">Friends</a>
-        <a href="/settings" class="selected">Settings</a>
-    `;
+    await header.render("Settings");
+
+    const settingsContainer = document.createElement("div");
+    settingsContainer.id = "settingsContainer";
+
+    const logOutButton = settingsContainer.appendChild(document.createElement("button"));
+    logOutButton.innerText = "Log Out";
+    logOutButton.addEventListener("click", () => {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+    });
+
+    document.body.appendChild(settingsContainer);
 }

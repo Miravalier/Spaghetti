@@ -62,19 +62,28 @@ export class ButtonDialog extends Dialog {
             this.close();
         });
 
+        const updateResultData = (element: HTMLInputElement | HTMLSelectElement) => {
+            if (element.type == "number") {
+                results.data[element.name] = Number(element.value);
+            } else {
+                results.data[element.name] = element.value;
+            }
+        };
+
         for (const input of this.container.querySelectorAll<HTMLInputElement>("input")) {
             if (!input.name) {
                 continue;
             }
-            const updateResultData = () => {
-                if (input.type == "number") {
-                    results.data[input.name] = Number(input.value);
-                } else {
-                    results.data[input.name] = input.value;
-                }
-            };
-            updateResultData();
-            input.addEventListener("change", updateResultData);
+            updateResultData(input);
+            input.addEventListener("change", () => updateResultData(input));
+        }
+
+        for (const select of this.container.querySelectorAll<HTMLSelectElement>("select")) {
+            if (!select.name) {
+                continue;
+            }
+            updateResultData(select);
+            select.addEventListener("change", () => updateResultData(select));
         }
 
         for (const button of this.container.querySelectorAll<HTMLButtonElement>(".buttons button")) {
@@ -95,4 +104,14 @@ export class ButtonDialog extends Dialog {
         onrejected?: (reason: any) => PromiseLike<never>) {
         return this.future.then(onfulfilled, onrejected);
     }
+}
+
+
+export async function renderErrorMessage(details: string) {
+    return await new ButtonDialog(`
+        <h4>\u26A0\uFE0F Error</h4>
+        <div class="error">
+            ${details}
+        </div>
+    `, ["Ok"]).render();
 }

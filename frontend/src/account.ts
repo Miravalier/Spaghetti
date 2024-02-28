@@ -1,6 +1,11 @@
-import { apiRequest, session, getUserByName } from "./requests.js";
+import {
+    apiRequest,
+    getFriendships,
+    session,
+} from "./requests.js";
 import { User, Transaction } from "./models.js";
-import { ButtonDialog } from "./dialog.js";
+import { ButtonDialog, renderErrorMessage } from "./dialog.js";
+import * as header from "./header.js";
 
 
 window.addEventListener("load", async () => {
@@ -12,13 +17,7 @@ window.addEventListener("load", async () => {
 async function render() {
     console.log("[*] Rendering app");
 
-    const pagesDiv = document.body.appendChild(document.createElement("div"));
-    pagesDiv.id = "pageLinks";
-    pagesDiv.innerHTML = `
-        <a href="/account" class="selected">Account</a>
-        <a href="/friends">Friends</a>
-        <a href="/settings">Settings</a>
-    `;
+    await header.render("Account");
 
     const balanceDiv = document.body.appendChild(document.createElement("div"));
     balanceDiv.id = "balanceSection";
@@ -32,14 +31,35 @@ async function render() {
 
     const sendButton = balanceDiv.querySelector<HTMLButtonElement>("#send");
     sendButton.addEventListener("click", async () => {
+        const friendshipOptions: string[] = [];
+        for (const { type, id, name } of await getFriendships()) {
+            if (type != "completed") {
+                continue;
+            }
+            friendshipOptions.push(`
+                <option value="${id}">${name}</option>
+            `);
+        }
+
+        if (friendshipOptions.length == 0) {
+            await renderErrorMessage("You can only send spaghetti to friends, add a friend first.");
+            return;
+        }
+
         const dialogResults = await new ButtonDialog(`
             <div class="field">
                 <div class="label">User</div>
-                <input name="username"></input>
+                <select name="user">
+                    ${friendshipOptions}
+                </select>
             </div>
             <div class="field">
                 <div class="label">Amount</div>
                 <input name="amount" type="number" step="0.01" min="0"></input>
+            </div>
+            <div class="field">
+                <div class="label">Comment</div>
+                <input name="comment" type="text"></input>
             </div>
         `, ["Send", "Cancel"]).render();
 
@@ -47,9 +67,16 @@ async function render() {
             return;
         }
 
-        console.log("Button Pressed:", dialogResults);
-        const destination = await getUserByName(dialogResults.data.username);
-        console.log(destination, dialogResults.data.amount);
+        try {
+            await apiRequest("POST", "/transfer", {
+                source: session.id,
+                destination: dialogResults.data.user,
+                amount: dialogResults.data.amount,
+                comment: dialogResults.data.comment,
+            });
+        } catch (error) {
+            await renderErrorMessage(error.toString());
+        }
     });
 
     const transactionLog = document.body.appendChild(document.createElement("div"));
@@ -94,13 +121,13 @@ async function loadTransactions() {
 
         // Outbound
         if (transaction.source == session.id) {
-            accountName = await getAccountName(transaction.destination);
+            accountName = transaction.destinationName;
             amount = "-" + Number(transaction.amount).toFixed(2);
             direction = "outbound";
         }
         // Inbound
         else {
-            accountName = await getAccountName(transaction.source);
+            accountName = transaction.sourceName;
             amount = "+" + Number(transaction.amount).toFixed(2);
             direction = "inbound";
         }
@@ -121,23 +148,4 @@ async function loadTransactions() {
         `;
         highlight = !highlight;
     }
-}
-
-
-const accountNameCache: { [id: string]: string } = {};
-
-
-async function getAccountName(id: string): Promise<string> {
-    if (id == "system") {
-        return "System";
-    }
-    if (accountNameCache[id] !== undefined) {
-        return accountNameCache[id];
-    }
-    const response: {
-        status: string;
-        user: User;
-    } = await apiRequest("GET", "/user", { id });
-    accountNameCache[id] = response.user.name;
-    return response.user.name;
 }

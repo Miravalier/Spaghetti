@@ -43,19 +43,6 @@ input {
     color: var(--sp-dark-grey);
 }
 
-#pageLinks {
-    padding: 4px;
-}
-
-#pageLinks a {
-    margin: 4px;
-    color: var(--sp-light-grey);
-}
-
-#pageLinks a.selected {
-    color: var(--sp-light-blue);
-}
-
 .dialog-container {
     position: absolute;
     width: 100%;
@@ -98,4 +85,29 @@ input {
 .dialog .label,
 .dialog input {
     margin: 4px 4px;
+}
+
+#headerBar {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+#profileDisplay {
+    padding: 0 8px;
+}
+
+#pageLinks {
+    padding: 4px;
+}
+
+#pageLinks a {
+    margin: 4px;
+    color: var(--sp-light-grey);
+}
+
+#pageLinks a.selected {
+    color: var(--sp-light-blue);
 }

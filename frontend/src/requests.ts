@@ -1,13 +1,15 @@
-import { User } from "./models.js";
+import { User, Friendship } from "./models.js";
 
 
 class Session {
     token: string;
     id: string;
+    name: string;
 
     constructor() {
         this.token = null;
         this.id = null;
+        this.name = null;
     }
 
     async load() {
@@ -24,6 +26,7 @@ class Session {
                 user: User;
             } = await apiRequest("GET", "/status");
             this.id = response.user.id;
+            this.name = response.user.name;
         } catch (error) {
             window.location.href = "/login";
         }
@@ -68,6 +71,31 @@ export async function apiRequest(method: string, endpoint: string, data: any = n
         throw error;
     }
     return await response.json();
+}
+
+
+export async function getFriendships(): Promise<Friendship[]> {
+    const response: {
+        status: string;
+        outbound: { [id: string]: string };
+        inbound: { [id: string]: string };
+    } = await apiRequest("GET", "/friends");
+
+    const friendships: Friendship[] = [];
+
+    for (const [id, name] of Object.entries(response.outbound)) {
+        if (response.inbound[id]) {
+            delete response.inbound[id];
+            friendships.push({ type: "completed", id, name });
+        }
+        else {
+            friendships.push({ type: "outbound", id, name });
+        }
+    }
+    for (const [id, name] of Object.entries(response.inbound)) {
+        friendships.push({ type: "inbound", id, name });
+    }
+    return friendships;
 }
 
 
