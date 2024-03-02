@@ -55,12 +55,17 @@ async def post_register(request: RegisterRequest):
     if document is None:
         raise HTTPException(status_code=401, detail="invalid invite code")
     invite = InviteCode.from_mongo_document(document)
+
+    user = database.create_user(request.username, request.password)
+
+    # add friend invite.creator
+    database.friendships.insert_one({"source": user.id, "destination": invite.creator})
+    database.friendships.insert_one({"destination": user.id, "source": invite.creator})
+
     if invite.uses == 1:
         database.invite_codes.delete_one({"code": request.invite_code})
     elif invite.uses != -1:
         database.invite_codes.update_one({"code": request.invite_code}, {"$inc": {"uses": -1}})
-
-    user = database.create_user(request.username, request.password)
 
     return {
         "status": "success",
@@ -181,8 +186,8 @@ class TransferRequest(BaseModel):
 
 @router.post("/transfer")
 async def post_transfer(user: AuthorizedUser, request: TransferRequest):
-    if request.amount < 0:
-        raise HTTPException(status_code=400, detail="negative amount is not allowed")
+    if request.amount < Decimal(1):
+        raise HTTPException(status_code=400, detail="you must send at least 1 spaghetti")
 
     if request.source == request.destination:
         raise HTTPException(status_code=400, detail="source and destination must be different")

@@ -84,8 +84,6 @@ export async function getFriendships(): Promise<Friendship[]> {
         inbound: { [id: string]: string };
     } = await apiRequest("GET", "/friends");
 
-    console.log("FUll response:", response);
-
     const friendships: Friendship[] = [];
 
     for (const [id, name] of Object.entries(response.outbound)) {

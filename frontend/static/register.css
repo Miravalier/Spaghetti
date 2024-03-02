@@ -1,0 +1,50 @@
+html,
+body {
+    height: 100%;
+}
+
+body {
+    background-color: var(--sp-blue);
+    align-items: center;
+    justify-content: center;
+}
+
+.watermark {
+    opacity: 50%;
+}
+
+.register {
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.register .label {
+    width: 140px;
+    text-align: right;
+}
+
+.register img {
+    height: 25%;
+    width: 25%;
+}
+
+.register input {
+    margin: 2px 6px;
+}
+
+.title {
+    font-size: xx-large;
+}
+
+.row {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.label {
+    margin: 2px 6px;
+}

@@ -16,7 +16,9 @@ async function render() {
     const settingsContainer = document.createElement("div");
     settingsContainer.id = "settingsContainer";
 
-    const logOutButton = settingsContainer.appendChild(document.createElement("button"));
+    const logOutField = settingsContainer.appendChild(document.createElement("div"));
+    logOutField.className = "field";
+    const logOutButton = logOutField.appendChild(document.createElement("button"));
     logOutButton.innerText = "Log Out";
     logOutButton.addEventListener("click", () => {
         localStorage.removeItem("token");

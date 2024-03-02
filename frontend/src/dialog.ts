@@ -40,6 +40,7 @@ export type ButtonDialogResults = {
 
 export class ButtonDialog extends Dialog {
     future: Future<ButtonDialogResults>;
+    focusButton: HTMLButtonElement;
 
     constructor(contents: string, buttons: string[]) {
         let buttonContents = "";
@@ -86,13 +87,24 @@ export class ButtonDialog extends Dialog {
             select.addEventListener("change", () => updateResultData(select));
         }
 
+        let firstButton = true;
         for (const button of this.container.querySelectorAll<HTMLButtonElement>(".buttons button")) {
+            if (firstButton) {
+                this.focusButton = button;
+                firstButton = false;
+            }
             button.addEventListener("click", () => {
                 results.button = button.dataset.id;
                 this.future.resolve(results);
                 this.close();
             });
         }
+    }
+
+    render(): this {
+        const x = super.render();
+        x.focusButton.focus();
+        return x;
     }
 
     close() {

@@ -126,6 +126,7 @@ class SpaghettiCLI(cmd2.Cmd):
         response = requests.post(
             f"{self.base_url}/api/invite",
             headers={"Authorization": f"Bearer {self.token}"},
+            json={}
         )
         body = response.json()
         print(response.status_code, body)
