@@ -5,10 +5,13 @@
 }
 
 #friendsList .friend {
-    background: #9abbff38;
+    display: flex;
+    background: #f4faff29;
     margin: 6px;
     padding: 2px;
     border-radius: 4px;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .label {

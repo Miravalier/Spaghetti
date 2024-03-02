@@ -98,7 +98,7 @@ class CreateInviteRequest(BaseModel):
 @router.post("/invite")
 async def create_invite_code(user: AdminUser, request: CreateInviteRequest):
     generated_code = secrets.token_urlsafe(32)
-    invite = InviteCode(id="", code=generated_code, creator=user.id, uses=request.uses)
+    invite = InviteCode(_id="", code=generated_code, creator=user.id, uses=request.uses)
     database.invite_codes.insert_one(invite.model_dump(exclude={"id"}))
     return {"status": "success", "code": generated_code}
 
@@ -123,7 +123,10 @@ class AddFriendRequest(BaseModel):
 
 @router.post("/friend")
 async def add_friend(user: AuthorizedUser, request: AddFriendRequest):
-    friend = User.from_mongo_document(database.users.find_one({"name": request.name}))
+    document = database.users.find_one({"name": request.name})
+    if document is None:
+        raise HTTPException(status_code=400, detail=f"no user named '{request.name}'")
+    friend = User.from_mongo_document(document)
     if friend.id == user.id:
         raise HTTPException(status_code=400, detail="cannot friend self")
 
@@ -137,17 +140,13 @@ async def add_friend(user: AuthorizedUser, request: AddFriendRequest):
 
 @router.get("/friends")
 async def list_friends(user: AuthorizedUser):
-    outbound = []
+    outbound = {}
     for document in database.friendships.find({"source": user.id}):
-        outbound.append({
-            document["destination"]: lookup_user_name(document["destination"]),
-        })
+        outbound[document["destination"]] = lookup_user_name(document["destination"])
 
-    inbound = []
+    inbound = {}
     for document in database.friendships.find({"destination": user.id}):
-        inbound.append({
-            document["source"]: lookup_user_name(document["source"]),
-        })
+        inbound[document["source"]] = lookup_user_name(document["source"])
 
     return {"status": "success", "outbound": outbound, "inbound": inbound}
 
@@ -157,10 +156,19 @@ async def remove_friend(user: AuthorizedUser, name: str):
     friend = User.from_mongo_document(database.users.find_one({"name": name}))
 
     result = database.friendships.delete_one({"source": user.id, "destination": friend.id})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=400, detail="already not friends")
+    deleted_count = result.deleted_count
 
-    return {"status": "success"}
+    result = database.friendships.delete_one({"destination": user.id, "source": friend.id})
+    deleted_count += result.deleted_count
+
+    if deleted_count == 0:
+        raise HTTPException(status_code=400, detail="already not friends")
+    elif deleted_count == 1:
+        detail = "deleted friend request"
+    else:
+        detail = "removed friend"
+
+    return {"status": "success", "detail": detail}
 
 
 class TransferRequest(BaseModel):

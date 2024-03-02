@@ -28,7 +28,7 @@ invite_codes.create_index({"code": 1})
 
 
 def create_user(name: str, password: str, admin: bool = False, balance: Decimal = Decimal("25")) -> User:
-    user = User(id="", name=name, hashed_password=hash_password(password), admin=admin, balance=balance)
+    user = User(_id="", name=name, hashed_password=hash_password(password), admin=admin, balance=balance)
     new_user_document = user.model_dump(exclude={"id"})
     new_user_document["balance"] = Decimal128(new_user_document["balance"])
     try:
@@ -37,6 +37,14 @@ def create_user(name: str, password: str, admin: bool = False, balance: Decimal 
         raise HTTPException(status_code=400, detail="username taken")
     user.id = result.inserted_id.binary.hex()
     return user
+
+
+def set_password(user_id: str, password: str) -> bool:
+    result = users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"hashed_password": hash_password(password)}},
+    )
+    return result.modified_count != 0
 
 
 def add_balance(user_id: str, amount: Decimal):
@@ -49,7 +57,7 @@ def add_balance(user_id: str, amount: Decimal):
 
 
 def add_transaction(source: str, destination: str, amount: Decimal, comment: str = "") -> Transaction:
-    transaction = Transaction(id="", source=source, destination=destination, amount=amount, comment=comment)
+    transaction = Transaction(_id="", source=source, destination=destination, amount=amount, comment=comment)
     document: dict = transaction.model_dump(exclude={"id"})
     document["amount"] = Decimal128(document["amount"])
     result = transactions.insert_one(document)

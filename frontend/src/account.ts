@@ -74,6 +74,7 @@ async function render() {
                 amount: dialogResults.data.amount,
                 comment: dialogResults.data.comment,
             });
+            window.location.reload();
         } catch (error) {
             await renderErrorMessage(error.toString());
         }
