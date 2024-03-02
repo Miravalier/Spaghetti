@@ -21,6 +21,11 @@ async def get_status(user: AuthorizedUser):
     return {"status": "success", "user": user.model_dump(exclude={"hashed_password"})}
 
 
+@router.get("/verification")
+async def get_verification(user: AuthorizedUser):
+    return {"status": "success", "token": user.verification_token}
+
+
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -39,7 +44,7 @@ async def post_login(request: LoginRequest):
     return {
         "status": "success",
         "user": user.model_dump(exclude={"hashed_password"}),
-        "token": user.token,
+        "token": user.auth_token,
     }
 
 
@@ -70,7 +75,7 @@ async def post_register(request: RegisterRequest):
     return {
         "status": "success",
         "user": user.model_dump(exclude={"hashed_password"}),
-        "token": user.token,
+        "token": user.auth_token,
     }
 
 

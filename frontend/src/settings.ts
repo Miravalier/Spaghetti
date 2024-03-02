@@ -41,5 +41,18 @@ async function render() {
         await apiRequest("PUT", "/user/settings", { privacy: privacySelect.value });
     });
 
+    const response: {
+        status: string;
+        token: string;
+    } = await apiRequest("GET", "/verification");
+
+    const verificationContainer = settingsContainer.appendChild(document.createElement("div"));
+    verificationContainer.className = "field column";
+    verificationContainer.innerHTML = `
+        <div class="label">Verification Token</div>
+        <div class="token">${response.token}</div>
+        <p>Do not share this token with anyone except spaghetti@miramontes.dev</p>
+    `;
+
     document.body.appendChild(settingsContainer);
 }

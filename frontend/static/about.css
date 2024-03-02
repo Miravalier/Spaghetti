@@ -1,0 +1,17 @@
+.about {
+    padding: 8px;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.about h2 {
+    margin-top: 12px;
+}
+
+.about p,
+.about a {
+    margin: 8px;
+    padding: 0 40px;
+}

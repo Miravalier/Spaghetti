@@ -9,9 +9,30 @@
 #settingsContainer .field {
     display: flex;
     flex-flow: row nowrap;
-    margin: 4px;
+    margin: 12px;
 }
 
 #settingsContainer .label {
     margin: 0 4px;
+}
+
+#settingsContainer .token {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2px 4px;
+    background: #2e6489;
+    color: white;
+    font-family: monospace;
+    border: 1px solid white;
+    border-radius: 4px;
+    word-break: break-all;
+    max-width: 600px;
+}
+
+#settingsContainer .column {
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+    justify-content: center;
 }

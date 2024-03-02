@@ -28,7 +28,7 @@ def main():
             print("[*] Password Generated:", args.password)
         try:
             user = database.create_user(args.username, args.password, admin=True)
-            print("[*] User Access Token:", user.token)
+            print("[*] User Access Token:", user.auth_token)
         except HTTPException:
             print("[!] User already exists!")
     elif args.action == "reset-password":

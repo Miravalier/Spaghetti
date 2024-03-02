@@ -1,7 +1,7 @@
 import { session } from "./requests.js";
 
 
-const pages = ["Account", "Friends", "Settings"];
+const pages = ["Account", "Friends", "Settings", "About"];
 
 
 export async function render(activePage: string) {
@@ -21,10 +21,12 @@ export async function render(activePage: string) {
 
     const profileDisplay = headerBar.appendChild(document.createElement("div"));
     profileDisplay.id = "profileDisplay";
-    profileDisplay.innerHTML = `User: <b>${session.name}</b>`;
-    profileDisplay.addEventListener("click", () => {
-        window.location.href = "/settings";
-    });
+    if (session.name) {
+        profileDisplay.innerHTML = `User: <b>${session.name}</b>`;
+        profileDisplay.addEventListener("click", () => {
+            window.location.href = "/settings";
+        });
+    }
 
-    document.body.appendChild(headerBar);
+    document.body.prepend(headerBar);
 }

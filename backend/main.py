@@ -42,6 +42,10 @@ async def root(request: Request):
 async def root(request: Request):
     return templates.TemplateResponse(request=request, name="register.html")
 
+@app.get("/about", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse(request=request, name="about.html")
+
 app.include_router(admin_endpoints.router, prefix="/admin")
 app.include_router(api_endpoints.router, prefix="/api")
 

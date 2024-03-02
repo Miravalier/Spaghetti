@@ -58,10 +58,17 @@ class User(MongoModel):
     privacy: str = "private"
 
     @property
-    def token(self) -> str:
+    def auth_token(self) -> str:
         nonce = secrets.token_hex(8)
-        signature = base64.b64encode(hashlib.sha512((ADMIN_TOKEN + nonce + self.id).encode()).digest()).decode()
-        json_string = AuthObject(user_id=self.id, nonce=nonce, signature=signature).model_dump_json()
+        signature = base64.b64encode(hashlib.sha512((ADMIN_TOKEN + nonce + self.id + "AUTH").encode()).digest()).decode()
+        json_string = AuthObject(user_id=self.id, nonce=nonce, auth=True, signature=signature).model_dump_json()
+        return base64.b64encode(json_string.encode()).decode()
+
+    @property
+    def verification_token(self) -> str:
+        nonce = secrets.token_hex(8)
+        signature = base64.b64encode(hashlib.sha512((ADMIN_TOKEN + nonce + self.id + "VERIFY").encode()).digest()).decode()
+        json_string = AuthObject(user_id=self.id, nonce=nonce, auth=False, signature=signature).model_dump_json()
         return base64.b64encode(json_string.encode()).decode()
 
 
@@ -76,4 +83,5 @@ class Transaction(MongoModel):
 class AuthObject(BaseModel):
     user_id: str
     nonce: str
+    auth: bool
     signature: str

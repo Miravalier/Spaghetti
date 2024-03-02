@@ -31,13 +31,35 @@ async def authorization_token(authorization: Annotated[str | None, Header()] = N
 AuthorizationToken = Annotated[str, Depends(authorization_token)]
 
 
+async def verify_user(token: str) -> User:
+    try:
+        auth_object = AuthObject.model_validate_json(base64.b64decode(token))
+    except:
+        raise ValueError("invalid token contents")
+
+    if not auth_object.auth:
+        raise ValueError("incorrect token type")
+
+    hash_string = ADMIN_TOKEN + auth_object.nonce + auth_object.user_id + "VERIFY"
+    expected_signature = hashlib.sha512(hash_string.encode()).digest()
+    given_signature = base64.b64decode(auth_object.signature)
+    if not compare_digest(expected_signature, given_signature):
+        raise ValueError("signature does not match")
+
+    return User.from_mongo_document(database.users.find_one({"_id": ObjectId(auth_object.user_id)}))
+
+
 async def authorized_user(token: AuthorizationToken) -> User:
     try:
         auth_object = AuthObject.model_validate_json(base64.b64decode(token))
     except:
         raise HTTPException(status_code=401, headers={"WWW-Authenticate": "Bearer"}, detail="invalid authorization")
 
-    expected_signature = hashlib.sha512((ADMIN_TOKEN + auth_object.nonce + auth_object.user_id).encode()).digest()
+    if not auth_object.auth:
+        raise HTTPException(status_code=401, headers={"WWW-Authenticate": "Bearer"}, detail="incorrect token type")
+
+    hash_string = ADMIN_TOKEN + auth_object.nonce + auth_object.user_id + "AUTH"
+    expected_signature = hashlib.sha512(hash_string.encode()).digest()
     given_signature = base64.b64decode(auth_object.signature)
     if not compare_digest(expected_signature, given_signature):
         raise HTTPException(status_code=401, headers={"WWW-Authenticate": "Bearer"}, detail="unauthorized")

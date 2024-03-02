@@ -1,9 +1,10 @@
 from decimal import Decimal
 from fastapi import APIRouter
+from fastapi.exceptions import HTTPException
 from pydantic import BaseModel
 
 import database
-from dependencies import AdminUser
+from dependencies import AdminUser, verify_user
 
 
 router = APIRouter()
@@ -12,6 +13,15 @@ router = APIRouter()
 @router.get("/status")
 async def get_status(admin: AdminUser):
     return {"status": "success", "user": admin.model_dump(exclude={"hashed_password"})}
+
+
+@router.post("/verification")
+async def post_verification(admin: AdminUser, token: str):
+    try:
+        return {"status": "success", "user": verify_user(token)}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="verification failed")
+
 
 
 class CreateUserRequest(BaseModel):
