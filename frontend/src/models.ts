@@ -1,8 +1,12 @@
+export type Privacy = "public" | "friends" | "private";
+
+
 export type User = {
     id: string;
     name: string;
     admin: boolean;
     balance: string;
+    privacy: Privacy;
 };
 
 

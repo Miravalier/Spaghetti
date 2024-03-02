@@ -2,11 +2,12 @@ import secrets
 from bson import ObjectId
 from datetime import date, datetime
 from decimal import Decimal
+from enum import Enum
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 import database
-from cache import lookup_user_name
+from cache import lookup_user_name, are_friends
 from dependencies import AuthorizedUser, AdminUser
 from models import User, InviteCode, Transaction
 from security import check_password
@@ -214,7 +215,38 @@ async def get_user_info(user: AuthorizedUser, id: str = None, name: str = None):
         queried_user = User.from_mongo_document(document)
     else:
         queried_user = user
+
+    permission = False
+    if user.admin or queried_user is user:
+        permission = True
+    elif queried_user.privacy == "public":
+        permission = True
+    elif queried_user.privacy == "friends" and are_friends(user, queried_user):
+        permission = True
+
+    if not permission:
+        raise HTTPException(status_code=403, detail="insufficient permission")
+
     return {"status": "success", "user": queried_user.model_dump(exclude={"hashed_password"})}
+
+
+
+class Privacy(str, Enum):
+    public = "public"
+    friends = "friends"
+    private = "private"
+
+
+class Settings(BaseModel):
+    privacy: Privacy = None
+
+
+@router.put("/user/settings")
+async def update_user_settings(user: AuthorizedUser, settings: Settings):
+    database.users.update_one(
+        {"_id": ObjectId(user.id)},
+        {"$set": settings.model_dump(exclude_none=True)},
+    )
 
 
 @router.get("/transactions")

@@ -55,6 +55,7 @@ class User(MongoModel):
     hashed_password: bytes
     admin: bool = False
     balance: FlexibleDecimal = Decimal()
+    privacy: str = "private"
 
     @property
     def token(self) -> str:

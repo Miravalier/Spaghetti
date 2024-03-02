@@ -5,11 +5,13 @@ class Session {
     token: string;
     id: string;
     name: string;
+    user: User;
 
     constructor() {
         this.token = null;
         this.id = null;
         this.name = null;
+        this.user = null;
     }
 
     async load() {
@@ -27,6 +29,7 @@ class Session {
             } = await apiRequest("GET", "/status");
             this.id = response.user.id;
             this.name = response.user.name;
+            this.user = response.user;
         } catch (error) {
             window.location.href = "/login";
         }

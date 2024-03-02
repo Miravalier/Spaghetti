@@ -23,5 +23,21 @@ async function render() {
         window.location.href = "/login";
     });
 
+    const privacyField = settingsContainer.appendChild(document.createElement("div"));
+    privacyField.className = "field";
+    privacyField.innerHTML = `
+        <div class="label">Privacy</div>
+        <select>
+            <option value="public">Public</option>
+            <option value="friends">Friends Only</option>
+            <option value="private">Self Only</option>
+        </select>
+    `;
+    const privacySelect = privacyField.querySelector<HTMLSelectElement>("select");
+    privacySelect.value = session.user.privacy;
+    privacySelect.addEventListener("change", async () => {
+        await apiRequest("PUT", "/user/settings", { privacy: privacySelect.value });
+    });
+
     document.body.appendChild(settingsContainer);
 }

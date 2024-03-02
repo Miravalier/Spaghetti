@@ -5,3 +5,13 @@
     align-items: center;
     justify-content: center;
 }
+
+#settingsContainer .field {
+    display: flex;
+    flex-flow: row nowrap;
+    margin: 4px;
+}
+
+#settingsContainer .label {
+    margin: 0 4px;
+}
