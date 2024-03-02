@@ -58,6 +58,9 @@ async function render() {
         friendEntry.innerHTML = `
             <div class="name">${friendship.name}</div>
         `;
+        friendEntry.querySelector(".name").addEventListener("click", () => {
+            window.location.href = `/account?id=${friendship.id}`;
+        });
         const entryButtons = friendEntry.appendChild(document.createElement("div"));
         entryButtons.className = "buttons";
 

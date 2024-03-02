@@ -32,10 +32,11 @@ async def post_user(admin: AdminUser, request: CreateUserRequest):
 class GrantUserSpaghettiRequest(BaseModel):
     user_id: str
     amount: Decimal
+    comment: str = ""
 
 
 @router.post("/balance/grant")
 async def grant_spaghetti(admin: AdminUser, request: GrantUserSpaghettiRequest):
     database.add_balance(request.user_id, request.amount)
-    database.add_transaction(admin.id, request.user_id, request.amount)
+    database.add_transaction("system", request.user_id, request.amount, request.comment)
     return {"status": "success"}

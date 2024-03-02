@@ -10,6 +10,9 @@ create_invite_parser = cmd2.Cmd2ArgumentParser()
 list_friends_parser = cmd2.Cmd2ArgumentParser()
 list_transactions_parser = cmd2.Cmd2ArgumentParser()
 
+set_url_parser = cmd2.Cmd2ArgumentParser()
+set_url_parser.add_argument("url", help="e.g. https://spaghetti.miramontes.dev")
+
 login_parser = cmd2.Cmd2ArgumentParser()
 login_parser.add_argument("username", help="Spaghetti account username")
 login_parser.add_argument("password", help="Spaghetti account password")
@@ -41,9 +44,16 @@ lookup_user_parser.add_argument("name", help="Username to look up")
 
 
 class SpaghettiCLI(cmd2.Cmd):
-    base_url: str = "http://127.0.0.1:8080"
+    base_url: str = "https://spaghetti.miramontes.dev"
     id: str = None
     token: str = None
+
+    @cmd2.with_argparser(set_url_parser)
+    def do_set_url(self, args):
+        """
+        Set API server url
+        """
+        self.base_url = args.url.rstrip("/")
 
     @cmd2.with_argparser(status_parser)
     def do_status(self, args):
@@ -69,12 +79,12 @@ class SpaghettiCLI(cmd2.Cmd):
                 "password": args.password,
             }
         )
-        body = response.json()
-        print(response.status_code, body)
-
+        print(response.status_code, response.text)
         if response.status_code == 200:
+            body = response.json()
             self.token = body["token"]
             self.id = body["user"]["id"]
+
 
     @cmd2.with_argparser(register_parser)
     def do_register(self, args):

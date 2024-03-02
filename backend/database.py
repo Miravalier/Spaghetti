@@ -36,6 +36,8 @@ def create_user(name: str, password: str, admin: bool = False, balance: Decimal 
     except DuplicateKeyError:
         raise HTTPException(status_code=400, detail="username taken")
     user.id = result.inserted_id.binary.hex()
+
+    add_transaction("system", user.id, balance, "Starting Balance")
     return user
 
 

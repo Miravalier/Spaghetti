@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 import database
-from cache import lookup_user_name, are_friends
+from cache import lookup_user_name, check_view_permission
 from dependencies import AuthorizedUser, AdminUser
 from models import User, InviteCode, Transaction
 from security import check_password
@@ -221,16 +221,7 @@ async def get_user_info(user: AuthorizedUser, id: str = None, name: str = None):
     else:
         queried_user = user
 
-    permission = False
-    if user.admin or queried_user is user:
-        permission = True
-    elif queried_user.privacy == "public":
-        permission = True
-    elif queried_user.privacy == "friends" and are_friends(user, queried_user):
-        permission = True
-
-    if not permission:
-        raise HTTPException(status_code=403, detail="insufficient permission")
+    check_view_permission(user, queried_user)
 
     return {"status": "success", "user": queried_user.model_dump(exclude={"hashed_password"})}
 
@@ -255,7 +246,8 @@ async def update_user_settings(user: AuthorizedUser, settings: Settings):
 
 
 @router.get("/transactions")
-async def get_transactions(user: AuthorizedUser, months_ago: int = 0):
+async def get_transactions(user: AuthorizedUser, months_ago: int = 0, id: str = None):
+    # Figure out date range
     today = date.today()
     month = today.month
     year = today.year
@@ -272,10 +264,18 @@ async def get_transactions(user: AuthorizedUser, months_ago: int = 0):
         next_month = month + 1
         next_year = year
 
+    # Check for user viewing permission
+    if id is not None:
+        queried_user = User.from_mongo_document(database.users.find_one({"_id": ObjectId(id)}))
+    else:
+        queried_user = user
+    check_view_permission(user, queried_user)
+
+    # Query transactions
     transactions: list[Transaction] = []
 
     outbound = database.transactions.find({
-        "source": user.id,
+        "source": queried_user.id,
         "date": {
             "$gte": datetime(year, month, 1),
             "$lt": datetime(next_year, next_month, 1)
@@ -285,7 +285,7 @@ async def get_transactions(user: AuthorizedUser, months_ago: int = 0):
         transactions.append(Transaction.from_mongo_document(document))
 
     inbound = database.transactions.find({
-        "destination": user.id,
+        "destination": queried_user.id,
         "date": {
             "$gte": datetime(year, month, 1),
             "$lt": datetime(next_year, next_month, 1)
