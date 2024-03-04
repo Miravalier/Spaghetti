@@ -117,6 +117,10 @@ class SpaghettiCLI(cmd2.Cmd):
         body = response.json()
         print(response.status_code, body)
 
+        for invite in body["invites"]:
+            code = invite["code"]
+            print(f"{self.base_url}/register?code={code}")
+
     @cmd2.with_argparser(check_invite_parser)
     def do_check_invite(self, args):
         """
@@ -140,6 +144,8 @@ class SpaghettiCLI(cmd2.Cmd):
         )
         body = response.json()
         print(response.status_code, body)
+        code = body["code"]
+        print(f"{self.base_url}/register?code={code}")
 
     @cmd2.with_argparser(delete_invite_parser)
     def do_delete_invite(self, args):
