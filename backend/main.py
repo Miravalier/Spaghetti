@@ -6,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 
 import admin_endpoints
 import api_endpoints
+import legacy_endpoints
 
 
 templates = Jinja2Templates(directory="/static")
@@ -46,7 +47,16 @@ async def root(request: Request):
 async def root(request: Request):
     return templates.TemplateResponse(request=request, name="about.html")
 
+@app.get("/terms", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse(request=request, name="terms.html")
+
+@app.get("/privacy", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse(request=request, name="privacy.html")
+
 app.include_router(admin_endpoints.router, prefix="/admin")
 app.include_router(api_endpoints.router, prefix="/api")
+app.include_router(legacy_endpoints.router)
 
 app.mount("/", StaticFiles(directory="/static", html=True), name="frontend")
