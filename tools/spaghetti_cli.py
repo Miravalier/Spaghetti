@@ -10,6 +10,9 @@ create_invite_parser = cmd2.Cmd2ArgumentParser()
 list_friends_parser = cmd2.Cmd2ArgumentParser()
 list_transactions_parser = cmd2.Cmd2ArgumentParser()
 
+income_parser = cmd2.Cmd2ArgumentParser()
+income_parser.add_argument("amount", type=int, nargs="?", default=10, help="Amount to grant")
+
 set_url_parser = cmd2.Cmd2ArgumentParser()
 set_url_parser.add_argument("url", help="e.g. https://spaghetti.miramontes.dev")
 
@@ -104,6 +107,19 @@ class SpaghettiCLI(cmd2.Cmd):
 
         if response.status_code == 200:
             self.token = body["token"]
+
+    @cmd2.with_argparser(income_parser)
+    def do_income(self, args):
+        """
+        Add income to all users
+        """
+        response = requests.post(
+            f"{self.base_url}/admin/balance/grant-all",
+            headers={"Authorization": f"Bearer {self.token}"},
+            json={"amount": args.amount},
+        )
+        body = response.json()
+        print(response.status_code, body)
 
     @cmd2.with_argparser(invites_parser)
     def do_invites(self, args):

@@ -50,3 +50,17 @@ async def grant_spaghetti(admin: AdminUser, request: GrantUserSpaghettiRequest):
     database.add_balance(request.user_id, request.amount)
     database.add_transaction("system", request.user_id, request.amount, request.comment)
     return {"status": "success"}
+
+
+class GrantAllSpaghettiRequest(BaseModel):
+    amount: Decimal = Decimal(10)
+    comment: str = "Income"
+
+
+@router.post("/balance/grant-all")
+async def grant_all_spaghetti(admin: AdminUser, request: GrantAllSpaghettiRequest):
+    for document in database.users.find({}):
+        user_id = document["_id"].binary.hex()
+        database.add_balance(user_id, request.amount)
+        database.add_transaction("system", user_id, request.amount, request.comment)
+    return {"status": "success"}
