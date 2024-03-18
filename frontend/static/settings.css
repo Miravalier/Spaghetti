@@ -59,3 +59,7 @@
 .invites .invite .item {
     margin: 12px;
 }
+
+.invites .invite a {
+    word-break: break-all;
+}
