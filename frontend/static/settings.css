@@ -36,3 +36,26 @@
     align-items: center;
     justify-content: center;
 }
+
+.invites {
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+    justify-content: center;
+    margin: 12px;
+}
+
+.invites .title {
+    font-weight: bold;
+}
+
+.invites .invite {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    justify-content: center;
+}
+
+.invites .invite .item {
+    margin: 12px;
+}

@@ -30,3 +30,11 @@ export type Friendship = {
     id: string;
     name: string;
 };
+
+
+export type InviteCode = {
+    code: string;
+    creator: string;
+    uses: number;
+    date: string;
+}

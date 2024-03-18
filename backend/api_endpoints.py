@@ -107,7 +107,7 @@ class CreateInviteRequest(BaseModel):
 
 
 @router.post("/invite")
-async def create_invite_code(user: AdminUser, request: CreateInviteRequest):
+async def create_invite_code(user: AuthorizedUser, request: CreateInviteRequest):
     generated_code = secrets.token_urlsafe(32)
     invite = InviteCode(_id="", code=generated_code, creator=user.id, uses=request.uses)
     database.invite_codes.insert_one(invite.model_dump(exclude={"id"}))
