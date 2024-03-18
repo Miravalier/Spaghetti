@@ -28,6 +28,9 @@ def store_user_name(user_id: str, user_name: str):
 
 
 def are_friends(user_a: User, user_b: User) -> bool:
+    if user_a.id == user_b.id:
+        return True
+
     result = friends.get((user_a.id, user_b.id), None)
     if result is not None:
         return result
@@ -44,7 +47,7 @@ def check_view_permission(viewing_user: User | None, viewed_user: User):
         return
 
     if viewing_user is not None:
-        if viewing_user.admin or viewed_user is viewing_user:
+        if viewing_user.admin or viewed_user.id == viewing_user.id:
             return
 
         if viewed_user.privacy == "friends" and are_friends(viewed_user, viewing_user):

@@ -21,6 +21,8 @@ services:
         image: mongo
         container_name: spaghetti_db
         restart: unless-stopped
+        ports:
+            - 27017:27017
         volumes:
             - /var/spaghetti/db:/data/db
         networks:

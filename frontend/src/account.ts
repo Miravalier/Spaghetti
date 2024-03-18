@@ -133,13 +133,31 @@ async function loadTransactions(id: string) {
 
     const transactionLogElement = document.querySelector("#transactionLog") as HTMLDivElement;
     const headerElement = transactionLogElement.appendChild(document.createElement("div"));
-    headerElement.className = "header row";
-    headerElement.innerHTML = `
-        <div class="account field">Account</div>
-        <div class="comment field">Comment</div>
-        <div class="amount field">Amount</div>
-        <div class="date field">Date</div>
-    `;
+
+    let rowType: string;
+    if (window.innerWidth >= 600) {
+        rowType = "full";
+    }
+    else {
+        rowType = "collapsed";
+    }
+
+    headerElement.className = `header row ${rowType}`;
+    if (window.innerWidth >= 600) {
+        headerElement.innerHTML = `
+            <div class="account field">Account</div>
+            <div class="comment field">Comment</div>
+            <div class="amount field">Amount</div>
+            <div class="date field">Date</div>
+        `;
+    }
+    else {
+        headerElement.innerHTML = `
+            <div class="account field">Account</div>
+            <div class="comment field">Comment</div>
+            <div class="amount field">Amount</div>
+        `;
+    }
     let highlight = true;
     for (const transaction of response.transactions) {
         let accountId: string;
@@ -164,18 +182,27 @@ async function loadTransactions(id: string) {
 
         const transactionElement = transactionLogElement.appendChild(document.createElement("div"));
         if (highlight) {
-            transactionElement.className = "transaction row highlight";
+            transactionElement.className = `transaction row highlight ${rowType}`;
         }
         else {
-            transactionElement.className = "transaction row";
+            transactionElement.className = `transaction row ${rowType}`;
         }
         transactionElement.dataset.id = transaction.id;
-        transactionElement.innerHTML = `
-            <div class="account field">${accountName}</div>
-            <div class="comment field">${transaction.comment}</div>
-            <div class="amount field ${direction}">${amount}</div>
-            <div class="date field">${transaction.date.split("T")[0]}</div>
-        `;
+        if (window.innerWidth >= 600) {
+            transactionElement.innerHTML = `
+                <div class="account field">${accountName}</div>
+                <div class="comment field">${transaction.comment}</div>
+                <div class="amount field ${direction}">${amount}</div>
+                <div class="date field">${transaction.date.split("T")[0]}</div>
+            `;
+        }
+        else {
+            transactionElement.innerHTML = `
+                <div class="account field">${accountName}</div>
+                <div class="comment field">${transaction.comment}</div>
+                <div class="amount field ${direction}">${amount}</div>
+            `;
+        }
         if (accountId != "system") {
             transactionElement.querySelector(".account.field").addEventListener("click", () => {
                 window.location.href = `/account?id=${accountId}`;

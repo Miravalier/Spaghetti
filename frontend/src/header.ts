@@ -21,7 +21,7 @@ export async function render(activePage: string) {
 
     const profileDisplay = headerBar.appendChild(document.createElement("div"));
     profileDisplay.id = "profileDisplay";
-    if (session.name) {
+    if (session.name && window.innerWidth >= 600) {
         profileDisplay.innerHTML = `User: <b>${session.name}</b>`;
         profileDisplay.addEventListener("click", () => {
             window.location.href = "/settings";
