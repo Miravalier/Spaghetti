@@ -42,6 +42,19 @@ async function render() {
         await apiRequest("PUT", "/user/settings", { privacy: privacySelect.value });
     });
 
+    const verifyResponse: {
+        status: string;
+        token: string;
+    } = await apiRequest("GET", "/verification");
+
+    const verificationContainer = settingsContainer.appendChild(document.createElement("div"));
+    verificationContainer.className = "field column";
+    verificationContainer.innerHTML = `
+        <div class="label">Verification Token</div>
+        <div class="token">${verifyResponse.token}</div>
+        <p>Do not share this token with anyone except spaghetti@miramontes.dev</p>
+    `;
+
     const inviteLinkButton = settingsContainer.appendChild(document.createElement("button"));
     inviteLinkButton.className = "field";
     inviteLinkButton.innerText = "Invite a Friend";
@@ -50,24 +63,36 @@ async function render() {
             status: string;
             code: string;
         } = await apiRequest("POST", "/invite", {});
-        window.location.reload();
+        await renderInvites(settingsContainer);
     });
 
+    await renderInvites(settingsContainer);
+
+    document.body.appendChild(settingsContainer);
+}
+
+
+async function renderInvites(settingsContainer: HTMLDivElement) {
     const invitesResponse: {
         status: string;
         invites: InviteCode[];
     } = await apiRequest("GET", "/invites");
 
-    if (invitesResponse.invites.length != 0) {
-        const invitesField = settingsContainer.appendChild(document.createElement("div"));
-        invitesField.className = "invites";
+    const previousInvitesContainer = document.querySelector("#invites");
+    if (previousInvitesContainer != null) {
+        previousInvitesContainer.remove();
+    }
 
-        const invitesTitle = invitesField.appendChild(document.createElement("div"));
+    if (invitesResponse.invites.length != 0) {
+        const invitesContainer = settingsContainer.appendChild(document.createElement("div"));
+        invitesContainer.id = "invites";
+
+        const invitesTitle = invitesContainer.appendChild(document.createElement("div"));
         invitesTitle.innerText = "Invite Links";
         invitesTitle.className = "title";
 
         for (const invite of invitesResponse.invites) {
-            const inviteContainer = invitesField.appendChild(document.createElement("div"));
+            const inviteContainer = invitesContainer.appendChild(document.createElement("div"));
             inviteContainer.className = "invite";
 
             const urlItem = inviteContainer.appendChild(document.createElement("a"));
@@ -83,23 +108,8 @@ async function render() {
             cancelButton.innerText = "X";
             cancelButton.addEventListener("click", async () => {
                 await apiRequest("DELETE", "/invite", { code: invite.code });
-                window.location.reload();
+                await renderInvites(settingsContainer);
             });
         }
     }
-
-    const verifyResponse: {
-        status: string;
-        token: string;
-    } = await apiRequest("GET", "/verification");
-
-    const verificationContainer = settingsContainer.appendChild(document.createElement("div"));
-    verificationContainer.className = "field column";
-    verificationContainer.innerHTML = `
-        <div class="label">Verification Token</div>
-        <div class="token">${verifyResponse.token}</div>
-        <p>Do not share this token with anyone except spaghetti@miramontes.dev</p>
-    `;
-
-    document.body.appendChild(settingsContainer);
 }

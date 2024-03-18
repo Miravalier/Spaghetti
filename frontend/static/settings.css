@@ -37,7 +37,7 @@
     justify-content: center;
 }
 
-.invites {
+#invites {
     display: flex;
     flex-flow: column nowrap;
     align-items: center;
@@ -45,21 +45,21 @@
     margin: 12px;
 }
 
-.invites .title {
+#invites .title {
     font-weight: bold;
 }
 
-.invites .invite {
+#invites .invite {
     display: flex;
     flex-flow: row wrap;
     align-items: center;
     justify-content: center;
 }
 
-.invites .invite .item {
+#invites .invite .item {
     margin: 12px;
 }
 
-.invites .invite a {
+#invites .invite a {
     word-break: break-all;
 }
